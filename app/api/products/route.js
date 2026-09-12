@@ -1,0 +1,1 @@
+import {NextResponse} from 'next/server';import {getActiveProducts} from '../../../lib/db';export async function GET(){return NextResponse.json({products:await getActiveProducts()},{headers:{'Cache-Control':'no-store'}})}

@@ -1,0 +1,39 @@
+CREATE TABLE IF NOT EXISTS products (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  price INTEGER NOT NULL DEFAULT 0,
+  category TEXT NOT NULL DEFAULT 'SIGNATURE',
+  color TEXT NOT NULL DEFAULT 'Black',
+  sizes JSONB NOT NULL DEFAULT '[]'::jsonb,
+  stock JSONB NOT NULL DEFAULT '{}'::jsonb,
+  gsm TEXT NOT NULL DEFAULT '',
+  fabric TEXT NOT NULL DEFAULT '',
+  fit TEXT NOT NULL DEFAULT '',
+  description TEXT NOT NULL DEFAULT '',
+  art TEXT NOT NULL DEFAULT 'AVNC',
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  image TEXT NOT NULL DEFAULT '',
+  image_public_id TEXT NOT NULL DEFAULT '',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE TABLE IF NOT EXISTS orders (
+  id TEXT PRIMARY KEY,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  customer JSONB NOT NULL,
+  items JSONB NOT NULL,
+  total INTEGER NOT NULL DEFAULT 0,
+  payment_status TEXT NOT NULL DEFAULT 'PENDING',
+  order_status TEXT NOT NULL DEFAULT 'NEW',
+  payment_order_id TEXT NOT NULL DEFAULT '',
+  payment_id TEXT NOT NULL DEFAULT ''
+);
+CREATE TABLE IF NOT EXISTS customers (
+  id TEXT PRIMARY KEY,name TEXT NOT NULL,email TEXT UNIQUE NOT NULL,password_hash TEXT NOT NULL,phone TEXT NOT NULL DEFAULT '',created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE TABLE IF NOT EXISTS customer_addresses (
+  id TEXT PRIMARY KEY,customer_id TEXT NOT NULL REFERENCES customers(id) ON DELETE CASCADE,label TEXT NOT NULL DEFAULT 'HOME',name TEXT NOT NULL,phone TEXT NOT NULL DEFAULT '',address TEXT NOT NULL,city TEXT NOT NULL,state TEXT NOT NULL DEFAULT '',pincode TEXT NOT NULL,country TEXT NOT NULL DEFAULT 'India',created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS products_active_idx ON products(active);
+CREATE INDEX IF NOT EXISTS orders_created_idx ON orders(created_at DESC);
+CREATE INDEX IF NOT EXISTS customer_addresses_customer_idx ON customer_addresses(customer_id,created_at DESC);

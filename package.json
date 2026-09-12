@@ -1,0 +1,17 @@
+{
+  "name": "avancy-collectives",
+  "version": "4.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "next": "16.3.4",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "@neondatabase/serverless": "^1.0.2",
+    "cloudinary": "2.11.0"
+  }
+}

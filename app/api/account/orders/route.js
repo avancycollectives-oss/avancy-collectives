@@ -1,0 +1,2 @@
+import {NextResponse} from 'next/server';import {cookies} from 'next/headers';import {customerFromToken} from '../../../../lib/customerAuth';import {getOrders} from '../../../../lib/db';
+export async function GET(){const c=await cookies();const user=await customerFromToken(c.get('avancy_customer')?.value);if(!user)return NextResponse.json({error:'Not signed in.'},{status:401});const orders=(await getOrders()).filter(o=>String(o.customer?.email||'').toLowerCase()===String(user.email).toLowerCase());return NextResponse.json({orders})}
