@@ -57,18 +57,19 @@ export async function POST(req, { params }) {
       String(process.env.SHIPROCKET_TEST_MODE || "").toLowerCase() === "true";
 
     if (testMode) {
+      const updatedOrder = await updateShiprocketData(order.id, {
+        shiprocketOrderId: "",
+        shiprocketShipmentId: "",
+        shiprocketAwbCode: "",
+        shiprocketCourierName: "",
+        shiprocketStatus: "TEST",
+      });
+
       return NextResponse.json({
         ok: true,
         testMode: true,
         message: "Shiprocket TEST MODE: no real shipment was created.",
-        order: {
-          id: order.id,
-          shiprocketOrderId: "",
-          shiprocketShipmentId: "",
-          shiprocketAwbCode: "",
-          shiprocketCourierName: "",
-          shiprocketStatus: "TEST",
-        },
+        order: updatedOrder,
       });
     }
 

@@ -252,6 +252,100 @@ export default function AdminOrderDetailClient({ order }) {
         </section>
       </div>
 
+      <section className="detail-panel shiprocket-management">
+        <div className="detail-panel-head">
+          <div>
+            <div className="detail-label">
+              SHIPROCKET MANAGEMENT
+            </div>
+
+            <h3>
+              SHIPPING DETAILS
+            </h3>
+          </div>
+
+          <strong>
+            {order.shiprocketStatus
+              ? String(order.shiprocketStatus).toUpperCase()
+              : "NOT CREATED"}
+          </strong>
+        </div>
+
+        {String(order.shiprocketStatus || "").toUpperCase() === "TEST" ? (
+          <p className="shiprocket-test-message">
+            TEST MODE — No real Shiprocket shipment was created.
+          </p>
+        ) : null}
+
+        <div className="shiprocket-detail-grid">
+          <div>
+            <span>SHIPROCKET ORDER ID</span>
+            <p>{order.shiprocketOrderId || "—"}</p>
+          </div>
+
+          <div>
+            <span>SHIPMENT ID</span>
+            <p>{order.shiprocketShipmentId || "—"}</p>
+          </div>
+
+          <div>
+            <span>AWB CODE</span>
+            <p>{order.shiprocketAwbCode || "—"}</p>
+          </div>
+
+          <div>
+            <span>COURIER</span>
+            <p>{order.shiprocketCourierName || "—"}</p>
+          </div>
+        </div>
+
+        <div className="shiprocket-actions">
+          <button
+            type="button"
+            className="admin-action-button"
+            disabled={saving}
+            onClick={async () => {
+              setSaving(true);
+              setError("");
+
+              try {
+                const response = await fetch(
+                  `/api/admin/orders/${encodeURIComponent(order.id)}/shiprocket/awb`,
+                  {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({}),
+                  }
+                );
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                  throw new Error(
+                    data?.error || "Unable to assign Shiprocket AWB."
+                  );
+                }
+
+                if (data.testMode) {
+                  alert(
+                    data.message ||
+                      "Shiprocket TEST MODE: no real AWB was assigned."
+                  );
+                }
+              } catch (err) {
+                setError(err?.message || "Unable to assign Shiprocket AWB.");
+              } finally {
+                setSaving(false);
+              }
+            }}
+          >
+            {saving ? "PROCESSING..." : "ASSIGN AWB"}
+          </button>
+        </div>
+      </section>
+
       {order.returnStatus && (
         <section className="detail-panel admin-return-detail">
           <div className="detail-panel-head">
