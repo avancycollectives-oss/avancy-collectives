@@ -18,15 +18,6 @@ export async function ensureSchema() {
       await db`CREATE TABLE IF NOT EXISTS admin_sessions (token_hash TEXT PRIMARY KEY,expires_at TIMESTAMPTZ NOT NULL,created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`;
       await db`CREATE TABLE IF NOT EXISTS orders (id TEXT PRIMARY KEY,created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),customer JSONB NOT NULL,items JSONB NOT NULL,total INTEGER NOT NULL DEFAULT 0,payment_status TEXT NOT NULL DEFAULT 'PENDING',order_status TEXT NOT NULL DEFAULT 'NEW',payment_order_id TEXT NOT NULL DEFAULT '',payment_id TEXT NOT NULL DEFAULT '')`;
       await db`ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivered_at TIMESTAMPTZ`;
-      await db`ALTER TABLE orders ADD COLUMN IF NOT EXISTS shiprocket_order_id TEXT NOT NULL DEFAULT ''`;
-      await db`ALTER TABLE orders ADD COLUMN IF NOT EXISTS shiprocket_shipment_id TEXT NOT NULL DEFAULT ''`;
-      await db`ALTER TABLE orders ADD COLUMN IF NOT EXISTS shiprocket_awb_code TEXT NOT NULL DEFAULT ''`;
-      await db`ALTER TABLE orders ADD COLUMN IF NOT EXISTS shiprocket_courier_name TEXT NOT NULL DEFAULT ''`;
-      await db`ALTER TABLE orders ADD COLUMN IF NOT EXISTS shiprocket_status TEXT NOT NULL DEFAULT ''`;
-      await db`ALTER TABLE products ADD COLUMN IF NOT EXISTS shipping_weight NUMERIC(8,3) NOT NULL DEFAULT 0.500`;
-      await db`ALTER TABLE products ADD COLUMN IF NOT EXISTS shipping_length NUMERIC(8,2) NOT NULL DEFAULT 30`;
-      await db`ALTER TABLE products ADD COLUMN IF NOT EXISTS shipping_breadth NUMERIC(8,2) NOT NULL DEFAULT 25`;
-      await db`ALTER TABLE products ADD COLUMN IF NOT EXISTS shipping_height NUMERIC(8,2) NOT NULL DEFAULT 5`;
 await db`ALTER TABLE orders ADD COLUMN IF NOT EXISTS return_status TEXT NOT NULL DEFAULT ''`;
 await db`ALTER TABLE orders ADD COLUMN IF NOT EXISTS return_requested_at TIMESTAMPTZ`;
 await db`ALTER TABLE orders ADD COLUMN IF NOT EXISTS return_reason TEXT NOT NULL DEFAULT ''`;
@@ -63,15 +54,15 @@ await db`ALTER TABLE customer_addresses ADD COLUMN IF NOT EXISTS created_at TIME
   return schemaPromise;
 }
 
-function mapProduct(r) { return r ? {id:r.id,name:r.name,price:Number(r.price),category:r.category,color:r.color,sizes:r.sizes||[],stock:r.stock||{},gsm:r.gsm,fabric:r.fabric,fit:r.fit,description:r.description,art:r.art,active:r.active,image:r.image||'',imagePublicId:r.image_public_id||'',shippingWeight:Number(r.shipping_weight||0),shippingLength:Number(r.shipping_length||0),shippingBreadth:Number(r.shipping_breadth||0),shippingHeight:Number(r.shipping_height||0),createdAt:r.created_at,updatedAt:r.updated_at} : null; }
-function mapOrder(o) { return o ? {id:o.id,createdAt:o.created_at,deliveredAt:o.delivered_at,returnStatus:o.return_status||'',returnRequestedAt:o.return_requested_at,returnReason:o.return_reason||'',returnEvidenceUrl:o.return_evidence_url||'',customer:o.customer,items:o.items,total:Number(o.total),paymentStatus:o.payment_status,orderStatus:o.order_status,paymentOrderId:o.payment_order_id,paymentId:o.payment_id,refundStatus:o.refund_status||'',refundId:o.refund_id||'',refundAmount:Number(o.refund_amount||0),refundRequestedAt:o.refund_requested_at,refundProcessedAt:o.refund_processed_at,refundError:o.refund_error||'',shiprocketOrderId:o.shiprocket_order_id||'',shiprocketShipmentId:o.shiprocket_shipment_id||'',shiprocketAwbCode:o.shiprocket_awb_code||'',shiprocketCourierName:o.shiprocket_courier_name||'',shiprocketStatus:o.shiprocket_status||''} : null; }
+function mapProduct(r) { return r ? {id:r.id,name:r.name,price:Number(r.price),category:r.category,color:r.color,sizes:r.sizes||[],stock:r.stock||{},gsm:r.gsm,fabric:r.fabric,fit:r.fit,description:r.description,art:r.art,active:r.active,image:r.image||'',imagePublicId:r.image_public_id||'',createdAt:r.created_at,updatedAt:r.updated_at} : null; }
+function mapOrder(o) { return o ? {id:o.id,createdAt:o.created_at,deliveredAt:o.delivered_at,returnStatus:o.return_status||'',returnRequestedAt:o.return_requested_at,returnReason:o.return_reason||'',returnEvidenceUrl:o.return_evidence_url||'',customer:o.customer,items:o.items,total:Number(o.total),paymentStatus:o.payment_status,orderStatus:o.order_status,paymentOrderId:o.payment_order_id,paymentId:o.payment_id} : null; }
 function mapAddress(a) { return a ? {id:a.id,label:a.label,name:a.name,phone:a.phone,address:a.address,city:a.city,state:a.state,pincode:a.pincode,country:a.country,createdAt:a.created_at} : null; }
 
 export async function getProducts(){await ensureSchema();return (await getSql()`SELECT * FROM products ORDER BY created_at ASC`).map(mapProduct)}
 export async function getActiveProducts(){await ensureSchema();return (await getSql()`SELECT * FROM products WHERE active=TRUE ORDER BY created_at ASC`).map(mapProduct)}
 export async function getProduct(id){await ensureSchema();return mapProduct((await getSql()`SELECT * FROM products WHERE id=${id} LIMIT 1`)[0])}
-export async function createProduct(p){await ensureSchema();return mapProduct((await getSql()`INSERT INTO products (id,name,price,category,color,sizes,stock,gsm,fabric,fit,description,art,active,image,image_public_id,shipping_weight,shipping_length,shipping_breadth,shipping_height) VALUES (${p.id},${p.name},${p.price},${p.category},${p.color},${JSON.stringify(p.sizes)}::jsonb,${JSON.stringify(p.stock)}::jsonb,${p.gsm},${p.fabric},${p.fit},${p.description},${p.art},${p.active},${p.image},${p.imagePublicId||''},${p.shippingWeight||0},${p.shippingLength||0},${p.shippingBreadth||0},${p.shippingHeight||0}) RETURNING *`)[0])}
-export async function updateProduct(id,p){await ensureSchema();return mapProduct((await getSql()`UPDATE products SET name=${p.name},price=${p.price},category=${p.category},color=${p.color},sizes=${JSON.stringify(p.sizes)}::jsonb,stock=${JSON.stringify(p.stock)}::jsonb,gsm=${p.gsm},fabric=${p.fabric},fit=${p.fit},description=${p.description},art=${p.art},active=${p.active},image=${p.image},image_public_id=${p.imagePublicId||''},shipping_weight=${p.shippingWeight||0},shipping_length=${p.shippingLength||0},shipping_breadth=${p.shippingBreadth||0},shipping_height=${p.shippingHeight||0},updated_at=NOW() WHERE id=${id} RETURNING *`)[0])}
+export async function createProduct(p){await ensureSchema();return mapProduct((await getSql()`INSERT INTO products (id,name,price,category,color,sizes,stock,gsm,fabric,fit,description,art,active,image,image_public_id) VALUES (${p.id},${p.name},${p.price},${p.category},${p.color},${JSON.stringify(p.sizes)}::jsonb,${JSON.stringify(p.stock)}::jsonb,${p.gsm},${p.fabric},${p.fit},${p.description},${p.art},${p.active},${p.image},${p.imagePublicId||''}) RETURNING *`)[0])}
+export async function updateProduct(id,p){await ensureSchema();return mapProduct((await getSql()`UPDATE products SET name=${p.name},price=${p.price},category=${p.category},color=${p.color},sizes=${JSON.stringify(p.sizes)}::jsonb,stock=${JSON.stringify(p.stock)}::jsonb,gsm=${p.gsm},fabric=${p.fabric},fit=${p.fit},description=${p.description},art=${p.art},active=${p.active},image=${p.image},image_public_id=${p.imagePublicId||''},updated_at=NOW() WHERE id=${id} RETURNING *`)[0])}
 export async function deleteProduct(id){await ensureSchema();return Boolean((await getSql()`DELETE FROM products WHERE id=${id} RETURNING id`)[0])}
 export async function decrementStock(items){await ensureSchema();const db=getSql();for(const i of items||[]){if(i.custom)continue;const p=await getProduct(i.id);if(!p)continue;const stock={...p.stock};stock[i.size]=Math.max(0,Number(stock[i.size]||0)-Number(i.qty||1));await db`UPDATE products SET stock=${JSON.stringify(stock)}::jsonb,updated_at=NOW() WHERE id=${i.id}`}}
 export async function createSession(tokenHash,expiresAt){await ensureSchema();await getSql()`DELETE FROM admin_sessions WHERE expires_at<=NOW()`;await getSql()`INSERT INTO admin_sessions(token_hash,expires_at) VALUES(${tokenHash},${expiresAt})`}
@@ -79,25 +70,7 @@ export async function validSession(tokenHash){if(!tokenHash)return false;await e
 export async function deleteSession(tokenHash){if(tokenHash){await ensureSchema();await getSql()`DELETE FROM admin_sessions WHERE token_hash=${tokenHash}`}}
 export async function getOrders(){await ensureSchema();return (await getSql()`SELECT * FROM orders ORDER BY created_at DESC`).map(mapOrder)}
 export async function getOrder(id){await ensureSchema();return mapOrder((await getSql()`SELECT * FROM orders WHERE id=${id} LIMIT 1`)[0])}
-export async function getOrderByPaymentId(paymentId){await ensureSchema();return mapOrder((await getSql()`SELECT * FROM orders WHERE payment_id=${paymentId} LIMIT 1`)[0])}
 export async function createOrder(order){await ensureSchema();const rows=await getSql()`INSERT INTO orders(id,customer,items,total,payment_status,order_status,payment_order_id,payment_id) VALUES(${order.id},${JSON.stringify(order.customer)}::jsonb,${JSON.stringify(order.items)}::jsonb,${order.total},${order.paymentStatus||'PENDING'},${order.orderStatus||'NEW'},${order.paymentOrderId||''},${order.paymentId||''}) RETURNING id`;return rows[0].id}
-export async function updateShiprocketData(id, data = {}) {
-  await ensureSchema();
-
-  const r = await getSql()`
-    UPDATE orders
-    SET shiprocket_order_id=${data.shiprocketOrderId || ''},
-        shiprocket_shipment_id=${data.shiprocketShipmentId || ''},
-        shiprocket_awb_code=${data.shiprocketAwbCode || ''},
-        shiprocket_courier_name=${data.shiprocketCourierName || ''},
-        shiprocket_status=${data.shiprocketStatus || ''}
-    WHERE id=${id}
-    RETURNING *
-  `;
-
-  return mapOrder(r[0]);
-}
-
 export async function updateOrderStatus(id,status){await ensureSchema();const r=status==='DELIVERED'?await getSql()`UPDATE orders SET order_status=${status},delivered_at=COALESCE(delivered_at,NOW()) WHERE id=${id} RETURNING *`:await getSql()`UPDATE orders SET order_status=${status} WHERE id=${id} RETURNING *`;return mapOrder(r[0])}
 export async function requestOrderReturn(id,email,reason='',evidenceUrl=''){await ensureSchema();const r=await getSql()`UPDATE orders SET return_status='REQUESTED',return_requested_at=NOW(),return_reason=${reason},return_evidence_url=${evidenceUrl} WHERE id=${id} AND LOWER(customer->>'email')=LOWER(${email}) AND order_status='DELIVERED' AND delivered_at IS NOT NULL AND delivered_at>=NOW()-INTERVAL '10 days' AND COALESCE(return_status,'')='' RETURNING *`;return mapOrder(r[0])}
 export async function updateOrderReturnStatus(id, returnStatus) {
@@ -128,49 +101,6 @@ export async function updateOrderReturnStatus(id, returnStatus) {
 
   return mapOrder(r[0]);
 }
-export async function markRefundRequested(id, amount) {
-  await ensureSchema();
-
-  const r = await getSql()`
-    UPDATE orders
-    SET refund_status='PENDING',
-        refund_amount=${amount},
-        refund_requested_at=NOW(),
-        refund_error=''
-    WHERE id=${id}
-      AND payment_status='PAID'
-      AND payment_id<>''
-      AND order_status='DELIVERED'
-      AND return_status='RECEIVED'
-      AND COALESCE(refund_status,'')=''
-    RETURNING *
-  `;
-
-  return mapOrder(r[0]);
-}
-
-export async function updateRefundResult(id, refundStatus, refundId='', refundError='') {
-  await ensureSchema();
-
-  const status = String(refundStatus || '').toUpperCase();
-
-  if (!['PENDING','PROCESSED','FAILED'].includes(status)) {
-    return null;
-  }
-
-  const r = await getSql()`
-    UPDATE orders
-    SET refund_status=${status},
-        refund_id=${refundId},
-        refund_error=${refundError},
-        refund_processed_at=${status==='PROCESSED' ? new Date() : null}
-    WHERE id=${id}
-    RETURNING *
-  `;
-
-  return mapOrder(r[0]);
-}
-
 export async function markPayment(id,paymentStatus,paymentId=''){await ensureSchema();const r=await getSql()`UPDATE orders SET payment_status=${paymentStatus},payment_id=${paymentId} WHERE id=${id} RETURNING id`;return Boolean(r[0])}
 export async function createPaymentOrderRecord(order){return createOrder(order)}
 export async function createCustomer(c){await ensureSchema();const r=await getSql()`INSERT INTO customers(id,name,email,password_hash,phone) VALUES(${c.id},${c.name},${c.email.toLowerCase()},${c.passwordHash},${c.phone||''}) RETURNING id,name,email,phone`;return r[0]}
