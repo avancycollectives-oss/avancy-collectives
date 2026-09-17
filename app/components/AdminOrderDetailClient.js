@@ -35,6 +35,15 @@ export default function AdminOrderDetailClient({ order }) {
   );
 
   const [saving, setSaving] = useState(false);
+  const [savingAwb, setSavingAwb] = useState(false);
+  const [savingPickup, setSavingPickup] = useState(false);
+  const [savingTestStatus, setSavingTestStatus] = useState(false);
+  const [testPickupStatus, setTestPickupStatus] = useState(
+    String(order.shiprocketPickupStatus || "TEST").toUpperCase()
+  );
+  const [testCourierStatus, setTestCourierStatus] = useState(
+    String(order.shiprocketCourierStatus || "TEST").toUpperCase()
+  );
   const [savingReturn, setSavingReturn] = useState(false);
   const [savingRefund, setSavingRefund] = useState(false);
   const [refundStatus, setRefundStatus] = useState(
@@ -303,9 +312,9 @@ export default function AdminOrderDetailClient({ order }) {
           <button
             type="button"
             className="admin-action-button"
-            disabled={saving}
+            disabled={savingAwb}
             onClick={async () => {
-              setSaving(true);
+              setSavingAwb(true);
               setError("");
 
               try {
@@ -337,16 +346,166 @@ export default function AdminOrderDetailClient({ order }) {
               } catch (err) {
                 setError(err?.message || "Unable to assign Shiprocket AWB.");
               } finally {
-                setSaving(false);
+                setSavingAwb(false);
               }
             }}
           >
-            {saving ? "PROCESSING..." : "ASSIGN AWB"}
+            {savingAwb ? "PROCESSING..." : "ASSIGN AWB"}
+          </button>
+
+          <button
+            type="button"
+            className="admin-action-button"
+            disabled={savingPickup}
+            onClick={async () => {
+              setSavingPickup(true);
+              setError("");
+
+              try {
+                const response = await fetch(
+                  `/api/admin/orders/${encodeURIComponent(order.id)}/shiprocket/pickup`,
+                  {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({}),
+                  }
+                );
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                  throw new Error(
+                    data?.error || "Unable to request Shiprocket pickup."
+                  );
+                }
+
+                if (data.testMode) {
+                  alert(
+                    data.message ||
+                      "Shiprocket TEST MODE: no real pickup was requested."
+                  );
+                }
+              } catch (err) {
+                setError(
+                  err?.message ||
+                    "Unable to request Shiprocket pickup."
+                );
+              } finally {
+                setSavingPickup(false);
+              }
+            }}
+          >
+            {savingPickup ? "PROCESSING..." : "REQUEST PICKUP"}
           </button>
         </div>
+
+        {String(process.env.NEXT_PUBLIC_SHIPROCKET_TEST_MODE || "").toLowerCase() === "true" ? (
+          <div className="shiprocket-test-controls">
+            <div className="shiprocket-test-head">
+              <div>
+                <span>TEST MODE</span>
+                <strong>SHIPPING STATUS CONTROL</strong>
+              </div>
+
+              <em>NO REAL SHIPROCKET ACTION</em>
+            </div>
+
+            <div className="shiprocket-test-grid">
+              <label>
+                <span>PICKUP STATUS</span>
+
+                <select
+                  value={testPickupStatus}
+                  onChange={(e) => setTestPickupStatus(e.target.value)}
+                  disabled={savingTestStatus}
+                >
+                  <option value="TEST">TEST</option>
+                  <option value="REQUESTED">REQUESTED</option>
+                  <option value="SCHEDULED">SCHEDULED</option>
+                  <option value="OUT_FOR_PICKUP">OUT FOR PICKUP</option>
+                  <option value="PICKED_UP">PICKED UP</option>
+                  <option value="CANCELLED">CANCELLED</option>
+                  <option value="EXCEPTION">EXCEPTION</option>
+                </select>
+              </label>
+
+              <label>
+                <span>COURIER STATUS</span>
+
+                <select
+                  value={testCourierStatus}
+                  onChange={(e) => setTestCourierStatus(e.target.value)}
+                  disabled={savingTestStatus}
+                >
+                  <option value="TEST">TEST</option>
+                  <option value="AWB_ASSIGNED">AWB ASSIGNED</option>
+                  <option value="PICKUP_SCHEDULED">PICKUP SCHEDULED</option>
+                  <option value="OUT_FOR_PICKUP">OUT FOR PICKUP</option>
+                  <option value="PICKED_UP">PICKED UP</option>
+                  <option value="SHIPPED">SHIPPED</option>
+                  <option value="IN_TRANSIT">IN TRANSIT</option>
+                  <option value="OUT_FOR_DELIVERY">OUT FOR DELIVERY</option>
+                  <option value="DELIVERED">DELIVERED</option>
+                  <option value="DELAYED">DELAYED</option>
+                  <option value="CANCELLED">CANCELLED</option>
+                </select>
+              </label>
+            </div>
+
+            <button
+              type="button"
+              className="admin-action-button"
+              disabled={savingTestStatus}
+              onClick={async () => {
+                setSavingTestStatus(true);
+                setError("");
+
+                try {
+                  const response = await fetch(
+                    `/api/admin/orders/${encodeURIComponent(order.id)}/shiprocket/test-status`,
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify({
+                        pickupStatus: testPickupStatus,
+                        courierStatus: testCourierStatus,
+                      }),
+                    }
+                  );
+
+                  const data = await response.json();
+
+                  if (!response.ok) {
+                    throw new Error(
+                      data?.error ||
+                        "Unable to update test shipping status."
+                    );
+                  }
+
+                  router.refresh();
+                } catch (err) {
+                  setError(
+                    err?.message ||
+                      "Unable to update test shipping status."
+                  );
+                } finally {
+                  setSavingTestStatus(false);
+                }
+              }}
+            >
+              {savingTestStatus
+                ? "UPDATING..."
+                : "UPDATE TEST STATUS"}
+            </button>
+          </div>
+        ) : null}
       </section>
 
-      {order.returnStatus && (
+      {order.returnStatus && ( 
         <section className="detail-panel admin-return-detail">
           <div className="detail-panel-head">
             <div>
