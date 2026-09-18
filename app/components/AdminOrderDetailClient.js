@@ -25,7 +25,7 @@ const returnStatuses = [
   "REJECTED",
 ];
 
-export default function AdminOrderDetailClient({ order }) {
+export default function AdminOrderDetailClient({ order, shiprocketTestMode }) {
   const [status, setStatus] = useState(
     String(order.orderStatus || "NEW").toUpperCase()
   );
@@ -401,7 +401,7 @@ export default function AdminOrderDetailClient({ order }) {
           </button>
         </div>
 
-        {String(process.env.NEXT_PUBLIC_SHIPROCKET_TEST_MODE || "").toLowerCase() === "true" ? (
+        {shiprocketTestMode === true ? (
           <div className="shiprocket-test-controls">
             <div className="shiprocket-test-head">
               <div>

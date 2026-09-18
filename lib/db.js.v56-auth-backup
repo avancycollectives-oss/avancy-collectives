@@ -40,11 +40,6 @@ await db`ALTER TABLE orders ADD COLUMN IF NOT EXISTS refund_requested_at TIMESTA
 await db`ALTER TABLE orders ADD COLUMN IF NOT EXISTS refund_processed_at TIMESTAMPTZ`;
 await db`ALTER TABLE orders ADD COLUMN IF NOT EXISTS refund_error TEXT NOT NULL DEFAULT ''`;
       await db`CREATE TABLE IF NOT EXISTS customers (id TEXT PRIMARY KEY,name TEXT NOT NULL,email TEXT UNIQUE NOT NULL,password_hash TEXT NOT NULL,phone TEXT NOT NULL DEFAULT '',created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`;
-      await db`ALTER TABLE customers ALTER COLUMN password_hash DROP NOT NULL`;
-      await db`ALTER TABLE customers ADD COLUMN IF NOT EXISTS google_sub TEXT`;
-      await db`CREATE UNIQUE INDEX IF NOT EXISTS customers_google_sub_idx ON customers(google_sub) WHERE google_sub IS NOT NULL`;
-      await db`CREATE TABLE IF NOT EXISTS customer_password_resets (id TEXT PRIMARY KEY,customer_id TEXT NOT NULL REFERENCES customers(id) ON DELETE CASCADE,token_hash TEXT UNIQUE NOT NULL,expires_at TIMESTAMPTZ NOT NULL,used_at TIMESTAMPTZ,created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`;
-      await db`CREATE INDEX IF NOT EXISTS customer_password_resets_customer_idx ON customer_password_resets(customer_id,created_at DESC)`;
       await db`CREATE TABLE IF NOT EXISTS customer_sessions (token_hash TEXT PRIMARY KEY,customer_id TEXT NOT NULL REFERENCES customers(id) ON DELETE CASCADE,expires_at TIMESTAMPTZ NOT NULL,created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`;
       await db`CREATE TABLE IF NOT EXISTS customer_addresses (id TEXT PRIMARY KEY,customer_id TEXT NOT NULL REFERENCES customers(id) ON DELETE CASCADE,label TEXT NOT NULL DEFAULT 'HOME',name TEXT NOT NULL,phone TEXT NOT NULL DEFAULT '',address TEXT NOT NULL,city TEXT NOT NULL,state TEXT NOT NULL DEFAULT '',pincode TEXT NOT NULL,country TEXT NOT NULL DEFAULT 'India',created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`;
       await db`ALTER TABLE customer_addresses ADD COLUMN IF NOT EXISTS label TEXT NOT NULL DEFAULT 'HOME'`;
@@ -183,47 +178,6 @@ export async function updateRefundResult(id, refundStatus, refundId='', refundEr
 export async function markPayment(id,paymentStatus,paymentId=''){await ensureSchema();const r=await getSql()`UPDATE orders SET payment_status=${paymentStatus},payment_id=${paymentId} WHERE id=${id} RETURNING id`;return Boolean(r[0])}
 export async function createPaymentOrderRecord(order){return createOrder(order)}
 export async function createCustomer(c){await ensureSchema();const r=await getSql()`INSERT INTO customers(id,name,email,password_hash,phone) VALUES(${c.id},${c.name},${c.email.toLowerCase()},${c.passwordHash},${c.phone||''}) RETURNING id,name,email,phone`;return r[0]}
-
-export async function findCustomerByGoogleSub(googleSub){
-  await ensureSchema();
-  return (await getSql()`SELECT * FROM customers WHERE google_sub=${googleSub} LIMIT 1`)[0]||null;
-}
-
-export async function createGoogleCustomer(c){
-  await ensureSchema();
-  const r=await getSql()`INSERT INTO customers(id,name,email,password_hash,phone,google_sub) VALUES(${c.id},${c.name},${c.email.toLowerCase()},NULL,${c.phone||''},${c.googleSub}) RETURNING id,name,email,phone`;
-  return r[0];
-}
-
-export async function linkCustomerGoogle(id,googleSub){
-  await ensureSchema();
-  const r=await getSql()`UPDATE customers SET google_sub=${googleSub} WHERE id=${id} RETURNING id,name,email,phone`;
-  return r[0]||null;
-}
-
-export async function createPasswordReset(customerId,tokenHash,expiresAt){
-  await ensureSchema();
-  await getSql()`DELETE FROM customer_password_resets WHERE customer_id=${customerId} AND used_at IS NULL`;
-  const id=crypto.randomUUID();
-  const r=await getSql()`INSERT INTO customer_password_resets(id,customer_id,token_hash,expires_at) VALUES(${id},${customerId},${tokenHash},${expiresAt}) RETURNING id,customer_id,expires_at`;
-  return r[0];
-}
-
-export async function findPasswordReset(tokenHash){
-  await ensureSchema();
-  return (await getSql()`SELECT * FROM customer_password_resets WHERE token_hash=${tokenHash} AND used_at IS NULL AND expires_at>NOW() LIMIT 1`)[0]||null;
-}
-
-export async function consumePasswordReset(id){
-  await ensureSchema();
-  await getSql()`UPDATE customer_password_resets SET used_at=NOW() WHERE id=${id} AND used_at IS NULL`;
-}
-
-export async function updateCustomerPassword(id,passwordHash){
-  await ensureSchema();
-  await getSql()`UPDATE customers SET password_hash=${passwordHash} WHERE id=${id}`;
-}
-
 export async function findCustomerByEmail(email){await ensureSchema();return (await getSql()`SELECT * FROM customers WHERE email=${String(email).toLowerCase()} LIMIT 1`)[0]||null}
 export async function getCustomer(id){await ensureSchema();return (await getSql()`SELECT id,name,email,phone,created_at FROM customers WHERE id=${id} LIMIT 1`)[0]||null}
 export async function updateCustomer(id,p){await ensureSchema();return (await getSql()`UPDATE customers SET name=${p.name},phone=${p.phone||''} WHERE id=${id} RETURNING id,name,email,phone,created_at`)[0]||null}

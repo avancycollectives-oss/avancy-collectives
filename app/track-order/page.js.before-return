@@ -57,14 +57,6 @@ export default function TrackOrder() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const [returning, setReturning] = useState(null);
-  const [reason, setReason] = useState("");
-  const [file, setFile] = useState(null);
-  const [preview, setPreview] = useState("");
-  const [uploading, setUploading] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [returnError, setReturnError] = useState("");
-
   useEffect(() => {
     const u = new URLSearchParams(location.search);
 
@@ -99,182 +91,6 @@ export default function TrackOrder() {
     }
   }
 
-  function returnEligible(order) {
-    if (order.orderStatus !== "DELIVERED") return false;
-    if (order.returnStatus) return false;
-    if (!order.deliveredAt) return false;
-
-    const delivered = new Date(order.deliveredAt).getTime();
-    const now = Date.now();
-    const tenDays = 10 * 24 * 60 * 60 * 1000;
-
-    return now - delivered <= tenDays;
-  }
-
-  function openReturn(order) {
-    setReturning(order);
-    setReason("");
-    setFile(null);
-    setPreview("");
-    setReturnError("");
-  }
-
-  function closeReturn() {
-    if (uploading || submitting) return;
-
-    setReturning(null);
-    setReason("");
-    setFile(null);
-    setPreview("");
-    setReturnError("");
-  }
-
-  function handleFileChange(e) {
-    const selected = e.target.files?.[0];
-
-    if (!selected) {
-      setFile(null);
-      setPreview("");
-      return;
-    }
-
-    const allowed = [
-      "image/jpeg",
-      "image/png",
-      "image/webp",
-      "image/gif",
-    ];
-
-    if (!allowed.includes(selected.type)) {
-      setReturnError(
-        "Please choose a JPG, PNG, WEBP or GIF image."
-      );
-      e.target.value = "";
-      setFile(null);
-      setPreview("");
-      return;
-    }
-
-    if (selected.size > 8 * 1024 * 1024) {
-      setReturnError("Image must be 8 MB or smaller.");
-      e.target.value = "";
-      setFile(null);
-      setPreview("");
-      return;
-    }
-
-    setReturnError("");
-    setFile(selected);
-
-    const url = URL.createObjectURL(selected);
-    setPreview(url);
-  }
-
-  async function submitReturn() {
-    if (!returning) return;
-
-    const cleanReason = reason.trim();
-
-    if (!cleanReason) {
-      setReturnError("Please provide a return reason.");
-      return;
-    }
-
-    if (cleanReason.length > 500) {
-      setReturnError(
-        "Return reason must be 500 characters or less."
-      );
-      return;
-    }
-
-    setSubmitting(true);
-    setReturnError("");
-
-    try {
-      let evidenceUrl = "";
-
-      if (file) {
-        setUploading(true);
-
-        const form = new FormData();
-        form.append("file", file);
-
-        const uploadResponse = await fetch(
-          `/api/account/orders/${encodeURIComponent(
-            returning.id
-          )}/return/upload`,
-          {
-            method: "POST",
-            body: form,
-          }
-        );
-
-        const uploadData = await uploadResponse.json();
-
-        if (!uploadResponse.ok) {
-          throw new Error(
-            uploadData.error ||
-              "Could not upload the image."
-          );
-        }
-
-        evidenceUrl = uploadData.url || "";
-        setUploading(false);
-      }
-
-      const response = await fetch(
-        `/api/account/orders/${encodeURIComponent(
-          returning.id
-        )}/return`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            reason: cleanReason,
-            evidenceUrl,
-          }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.error ||
-            "Could not submit return request."
-        );
-      }
-
-      alert("Return request submitted successfully.");
-
-      closeReturn();
-
-      setOrder((current) =>
-        current
-          ? {
-              ...current,
-              returnStatus: data.returnStatus || "REQUESTED",
-              returnRequestedAt:
-                data.returnRequestedAt ||
-                new Date().toISOString(),
-            }
-          : current
-      );
-    } catch (error) {
-      setUploading(false);
-
-      setReturnError(
-        error?.message ||
-          "Could not submit return request."
-      );
-    } finally {
-      setSubmitting(false);
-      setUploading(false);
-    }
-  }
-
   const status = String(
     order?.orderStatus || "NEW"
   ).toUpperCase();
@@ -288,12 +104,13 @@ export default function TrackOrder() {
   ).toUpperCase();
 
   const hasShiprocketTracking =
-    Boolean(shiprocketCourierStatus) ||
-    Boolean(shiprocketPickupStatus) ||
-    Boolean(order?.shiprocketAwbCode) ||
-    Boolean(order?.shiprocketCourierName) ||
-    Boolean(order?.shiprocketShipmentId) ||
-    Boolean(order?.shiprocketOrderId);
+    status === "CONFIRMED" &&
+    (
+      Boolean(shiprocketCourierStatus) ||
+      Boolean(shiprocketPickupStatus) ||
+      Boolean(order?.shiprocketAwbCode) ||
+      Boolean(order?.shiprocketCourierName)
+    );
 
   const courierIndex =
     shiprocketSteps.indexOf(shiprocketCourierStatus);
@@ -514,33 +331,6 @@ export default function TrackOrder() {
             <Link href="/shop">
               SHOP AGAIN →
             </Link>
-
-            {order.returnStatus ? (
-              <div className="customer-return-status">
-                <b>RETURN REQUEST</b>
-
-                <span>
-                  {String(order.returnStatus).toUpperCase()}
-                </span>
-
-                {order.returnRequestedAt && (
-                  <small>
-                    Requested{" "}
-                    {new Date(
-                      order.returnRequestedAt
-                    ).toLocaleDateString("en-IN")}
-                  </small>
-                )}
-              </div>
-            ) : returnEligible(order) ? (
-              <button
-                type="button"
-                className="return-order-btn"
-                onClick={() => openReturn(order)}
-              >
-                RETURN ORDER
-              </button>
-            ) : null}
           </div>
 
           <div className="result-meta">
@@ -583,152 +373,6 @@ export default function TrackOrder() {
             ))}
           </div>
         </section>
-      )}
-
-      {returning && (
-        <div
-          className="return-modal-backdrop"
-          onMouseDown={(e) => {
-            if (e.target === e.currentTarget) {
-              closeReturn();
-            }
-          }}
-        >
-          <div
-            className="return-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="track-return-title"
-          >
-            <div className="return-modal-head">
-              <div>
-                <span>
-                  ORDER {returning.id}
-                </span>
-
-                <h2 id="track-return-title">
-                  RETURN ORDER.
-                </h2>
-              </div>
-
-              <button
-                type="button"
-                className="return-close"
-                onClick={closeReturn}
-                disabled={uploading || submitting}
-                aria-label="Close"
-              >
-                ×
-              </button>
-            </div>
-
-            <p className="return-modal-intro">
-              Returns are available within 10 days
-              of delivery. Tell us why you would
-              like to return this order.
-            </p>
-
-            <label className="return-field">
-              <span>RETURN REASON</span>
-
-              <textarea
-                value={reason}
-                onChange={(e) =>
-                  setReason(e.target.value)
-                }
-                maxLength={500}
-                placeholder="Please describe the reason for your return…"
-                rows={5}
-                disabled={submitting}
-              />
-
-              <small>
-                {reason.length}/500
-              </small>
-            </label>
-
-            <div className="return-upload">
-              <span>PHOTO EVIDENCE</span>
-
-              <label
-                htmlFor="track-return-evidence-file"
-                className="return-file-btn"
-              >
-                {file
-                  ? "CHANGE FILE"
-                  : "CHOOSE FILE"}
-              </label>
-
-              <input
-                id="track-return-evidence-file"
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif"
-                onChange={handleFileChange}
-                disabled={submitting}
-                hidden
-              />
-
-              {file && (
-                <div className="return-file-name">
-                  <strong>{file.name}</strong>
-
-                  <span>
-                    {(
-                      file.size /
-                      1024 /
-                      1024
-                    ).toFixed(2)}{" "}
-                    MB
-                  </span>
-                </div>
-              )}
-
-              {preview && (
-                <div className="return-preview">
-                  <img
-                    src={preview}
-                    alt="Return evidence preview"
-                  />
-                </div>
-              )}
-
-              <small>
-                Optional. JPG, PNG, WEBP or GIF ·
-                Maximum 8 MB
-              </small>
-            </div>
-
-            {returnError && (
-              <div className="return-form-error">
-                {returnError}
-              </div>
-            )}
-
-            <div className="return-modal-actions">
-              <button
-                type="button"
-                className="return-cancel-btn"
-                onClick={closeReturn}
-                disabled={uploading || submitting}
-              >
-                CANCEL
-              </button>
-
-              <button
-                type="button"
-                className="return-submit-btn"
-                onClick={submitReturn}
-                disabled={uploading || submitting}
-              >
-                {uploading
-                  ? "UPLOADING…"
-                  : submitting
-                  ? "SUBMITTING…"
-                  : "SUBMIT RETURN REQUEST"}
-              </button>
-            </div>
-          </div>
-        </div>
       )}
 
       <SiteFooter />

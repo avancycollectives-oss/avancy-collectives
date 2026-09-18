@@ -9246,3 +9246,260 @@ main.account-premium .address-page .saved-address{
   }
 }
 
+
+
+/* V5.6 AUTH / GOOGLE SIGN-IN */
+.google-auth-button{
+  width:100%;
+  min-height:52px;
+  margin-top:24px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  border:1px solid #454540;
+  border-radius:14px;
+  background:#151515;
+  color:#fff;
+  text-decoration:none;
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.07em;
+  transition:transform .2s ease,border-color .2s ease,background .2s ease;
+}
+
+.google-auth-button:hover{
+  transform:translateY(-2px);
+  border-color:#777;
+  background:#1b1b1b;
+}
+
+.google-auth-button svg{
+  width:20px;
+  height:20px;
+  flex:0 0 20px;
+  fill:none;
+}
+
+.google-auth-button svg path:nth-child(1){fill:#4285F4}
+.google-auth-button svg path:nth-child(2){fill:#34A853}
+.google-auth-button svg path:nth-child(3){fill:#FBBC05}
+.google-auth-button svg path:nth-child(4){fill:#EA4335}
+
+.auth-divider{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  margin:22px 0 4px;
+  color:#666;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.14em;
+}
+
+.auth-divider::before,
+.auth-divider::after{
+  content:"";
+  flex:1;
+  height:1px;
+  background:#333;
+}
+
+.auth-divider span{
+  flex:0 0 auto;
+}
+
+.forgot-password-row{
+  display:flex;
+  justify-content:flex-end;
+  margin-top:-6px;
+}
+
+.forgot-password-row a{
+  color:#aaa;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.06em;
+  text-decoration:none;
+  transition:color .2s ease;
+}
+
+.forgot-password-row a:hover{
+  color:var(--acid);
+}
+
+/* =========================================================
+   AVANCY — SHIPPING & RETURNS
+   ========================================================= */
+
+.ac-shipping{
+  position:relative;
+  padding:110px 6vw 100px;
+  background:#0a0a0a;
+  color:#fff;
+  border-top:1px solid rgba(255,255,255,.12);
+  overflow:hidden;
+}
+
+.ac-shipping::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  opacity:.035;
+  background-image:
+    linear-gradient(rgba(255,255,255,.8) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.8) 1px,transparent 1px);
+  background-size:42px 42px;
+}
+
+.ac-shipping .ac-section-head{
+  position:relative;
+  z-index:1;
+  margin-bottom:55px;
+}
+
+.ac-shipping .ac-section-head > div > span{
+  display:block;
+  margin-bottom:12px;
+  color:#e2f952;
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:2px;
+}
+
+.ac-shipping .ac-section-head h2{
+  margin:0;
+  color:#fff;
+  font-size:clamp(42px,7vw,92px);
+  line-height:.88;
+  letter-spacing:-3px;
+}
+
+.ac-shipping .ac-section-head h2 em{
+  color:#e2f952;
+  font-style:normal;
+}
+
+.ac-shipping-grid{
+  position:relative;
+  z-index:1;
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:2px;
+  background:rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.12);
+}
+
+.ac-shipping-grid article{
+  min-height:285px;
+  padding:32px;
+  background:#111;
+  transition:transform .25s ease,background .25s ease;
+}
+
+.ac-shipping-grid article:hover{
+  background:#151515;
+  transform:translateY(-3px);
+}
+
+.ac-shipping-num{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:38px;
+  height:38px;
+  margin-bottom:30px;
+  background:#e2f952;
+  color:#0a0a0a;
+  font-size:12px;
+  font-weight:900;
+}
+
+.ac-shipping-grid h3{
+  margin:0 0 14px;
+  font-size:22px;
+  letter-spacing:1px;
+}
+
+.ac-shipping-grid p{
+  max-width:650px;
+  margin:0 0 12px;
+  color:rgba(255,255,255,.68);
+  font-size:14px;
+  line-height:1.7;
+}
+
+.ac-shipping-grid p:last-child{
+  margin-bottom:0;
+}
+
+.ac-shipping-grid strong{
+  color:#fff;
+}
+
+.ac-shipping-note{
+  position:relative;
+  z-index:1;
+  display:flex;
+  gap:24px;
+  align-items:flex-start;
+  margin-top:2px;
+  padding:28px 32px;
+  background:#e2f952;
+  color:#0a0a0a;
+}
+
+.ac-shipping-note strong{
+  flex:0 0 auto;
+  font-size:12px;
+  letter-spacing:1.5px;
+}
+
+.ac-shipping-note span{
+  max-width:900px;
+  font-size:13px;
+  line-height:1.65;
+}
+
+@media (max-width:700px){
+  .ac-shipping{
+    padding:75px 20px 70px;
+  }
+
+  .ac-shipping .ac-section-head{
+    margin-bottom:35px;
+  }
+
+  .ac-shipping .ac-section-head h2{
+    font-size:48px;
+    letter-spacing:-2px;
+  }
+
+  .ac-shipping-grid{
+    grid-template-columns:1fr;
+  }
+
+  .ac-shipping-grid article{
+    min-height:0;
+    padding:26px 22px;
+  }
+
+  .ac-shipping-num{
+    margin-bottom:22px;
+  }
+
+  .ac-shipping-grid h3{
+    font-size:20px;
+  }
+
+  .ac-shipping-grid p{
+    font-size:13px;
+  }
+
+  .ac-shipping-note{
+    flex-direction:column;
+    gap:10px;
+    padding:24px 22px;
+  }
+}
