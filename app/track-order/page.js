@@ -101,7 +101,23 @@ export default function TrackOrder() {
 
   function returnEligible(order) {
     if (order.orderStatus !== "DELIVERED") return false;
-    if (order.returnStatus) return false;
+
+    const returnStatus = String(
+      order.returnStatus || ""
+    ).toUpperCase();
+
+    /*
+     * A rejected return may be resubmitted exactly once.
+     * The backend also enforces this rule.
+     */
+    if (
+      returnStatus === "REJECTED" &&
+      Number(order.returnResubmissionCount || 0) === 0
+    ) {
+      return true;
+    }
+
+    if (returnStatus) return false;
     if (!order.deliveredAt) return false;
 
     const delivered = new Date(order.deliveredAt).getTime();
@@ -515,7 +531,86 @@ export default function TrackOrder() {
               SHOP AGAIN →
             </Link>
 
-            {order.returnStatus ? (
+            {String(order.returnStatus || "").toUpperCase() ===
+              "REJECTED" ? (
+              <div className="customer-return-rejected">
+                <div className="customer-return-status">
+                  <b>RETURN REQUEST</b>
+
+                  <span>REJECTED</span>
+
+                  {order.returnRequestedAt && (
+                    <small>
+                      Requested{" "}
+                      {new Date(
+                        order.returnRequestedAt
+                      ).toLocaleDateString("en-IN")}
+                    </small>
+                  )}
+                </div>
+
+                <div className="customer-return-reason">
+                  <b>REJECTION REASON</b>
+                  <p>
+                    {order.returnRejectionReason ||
+                      "Your return request was rejected. Please contact support for assistance."}
+                  </p>
+                </div>
+
+                {Number(order.returnResubmissionCount || 0) ===
+                0 ? (
+                  <div className="customer-return-actions">
+                    <button
+                      type="button"
+                      className="return-order-btn"
+                      onClick={() => openReturn(order)}
+                    >
+                      RESUBMIT RETURN
+                    </button>
+
+                    <a
+                      className="return-support-btn"
+                      href={`mailto:avancycollectives@gmail.com?subject=${encodeURIComponent(
+                        `Return Support — Order ${order.id}`
+                      )}&body=${encodeURIComponent(
+                        `Hello Avancy Collectives Support,
+
+I need help with the return for order ${order.id}.
+
+Thank you.`
+                      )}`}
+                    >
+                      CONTACT SUPPORT
+                    </a>
+                  </div>
+                ) : (
+                  <div className="customer-return-closed">
+                    <b>RETURN REQUEST CLOSED</b>
+
+                    <p>
+                      This return request has been rejected again.
+                      Further resubmissions are not available.
+                      Please contact support if you need further assistance.
+                    </p>
+
+                    <a
+                      className="return-support-btn"
+                      href={`mailto:avancycollectives@gmail.com?subject=${encodeURIComponent(
+                        `Return Support — Order ${order.id}`
+                      )}&body=${encodeURIComponent(
+                        `Hello Avancy Collectives Support,
+
+I need help with the closed return request for order ${order.id}.
+
+Thank you.`
+                      )}`}
+                    >
+                      CONTACT SUPPORT
+                    </a>
+                  </div>
+                )}
+              </div>
+            ) : order.returnStatus ? (
               <div className="customer-return-status">
                 <b>RETURN REQUEST</b>
 
@@ -623,9 +718,10 @@ export default function TrackOrder() {
             </div>
 
             <p className="return-modal-intro">
-              Returns are available within 10 days
-              of delivery. Tell us why you would
-              like to return this order.
+              {String(returning.returnStatus || "").toUpperCase() ===
+              "REJECTED"
+                ? "Please update your return reason and resubmit your request. This is your final resubmission."
+                : "Returns are available within 10 days of delivery. Tell us why you would like to return this order."}
             </p>
 
             <label className="return-field">
@@ -724,6 +820,9 @@ export default function TrackOrder() {
                   ? "UPLOADING…"
                   : submitting
                   ? "SUBMITTING…"
+                  : String(returning.returnStatus || "").toUpperCase() ===
+                    "REJECTED"
+                  ? "RESUBMIT RETURN REQUEST"
                   : "SUBMIT RETURN REQUEST"}
               </button>
             </div>

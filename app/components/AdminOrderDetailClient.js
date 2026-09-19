@@ -55,6 +55,13 @@ export default function AdminOrderDetailClient({ order, shiprocketTestMode }) {
   const [refundError, setRefundError] = useState(
     String(order.refundError || "")
   );
+
+  const [codRefundReference, setCodRefundReference] =
+    useState(String(order.refundReference || ""));
+
+  const [savingCodRefund, setSavingCodRefund] =
+    useState(false);
+
   const [error, setError] = useState("");
 
   const router = useRouter();
@@ -117,11 +124,41 @@ export default function AdminOrderDetailClient({ order, shiprocketTestMode }) {
   }
 
   async function updateReturnStatus(v) {
+    const previousStatus = returnStatus;
+
     setReturnStatus(v);
     setSavingReturn(true);
     setError("");
 
     try {
+      let rejectionReason = "";
+
+      if (v === "REJECTED") {
+        rejectionReason = window.prompt(
+          "Enter the reason for rejecting this return request:",
+          String(order.returnRejectionReason || "")
+        );
+
+        if (rejectionReason === null) {
+          setReturnStatus(previousStatus);
+          return;
+        }
+
+        rejectionReason = rejectionReason.trim();
+
+        if (!rejectionReason) {
+          setReturnStatus(previousStatus);
+          throw Error("A rejection reason is required.");
+        }
+
+        if (rejectionReason.length > 500) {
+          setReturnStatus(previousStatus);
+          throw Error(
+            "Rejection reason must be 500 characters or less."
+          );
+        }
+      }
+
       const r = await fetch(
         `/api/admin/orders/${encodeURIComponent(order.id)}`,
         {
@@ -131,6 +168,7 @@ export default function AdminOrderDetailClient({ order, shiprocketTestMode }) {
           },
           body: JSON.stringify({
             returnStatus: v,
+            rejectionReason,
           }),
         }
       );
@@ -143,8 +181,37 @@ export default function AdminOrderDetailClient({ order, shiprocketTestMode }) {
         );
       }
 
+      /*
+       * Use the EXISTING Shiprocket pickup endpoint.
+       * The endpoint itself handles SHIPROCKET_TEST_MODE.
+       */
+      if (v === "PICKUP") {
+        const pickupResponse = await fetch(
+          `/api/admin/orders/${encodeURIComponent(order.id)}/shiprocket/pickup`,
+          {
+            method: "POST",
+          }
+        );
+
+        const pickupData = await pickupResponse.json();
+
+        if (!pickupResponse.ok) {
+          throw Error(
+            pickupData.error ||
+              "Return moved to PICKUP, but Shiprocket pickup could not be requested."
+          );
+        }
+
+        if (pickupData.testMode) {
+          setError(
+            "Return moved to PICKUP. Shiprocket TEST MODE is active — no real pickup was requested."
+          );
+        }
+      }
+
       router.refresh();
     } catch (e) {
+      setReturnStatus(previousStatus);
       setError(e.message);
     } finally {
       setSavingReturn(false);
@@ -185,6 +252,60 @@ export default function AdminOrderDetailClient({ order, shiprocketTestMode }) {
       setRefundError(e.message);
     } finally {
       setSavingRefund(false);
+    }
+  }
+
+  async function completeCodRefund() {
+    const reference = codRefundReference.trim();
+
+    if (!reference) {
+      setRefundError(
+        "Enter the UPI or bank refund reference first."
+      );
+      return;
+    }
+
+    setSavingCodRefund(true);
+    setRefundError("");
+    setError("");
+
+    try {
+      const r = await fetch(
+        `/api/admin/orders/${encodeURIComponent(order.id)}/cod-refund`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            reference,
+          }),
+        }
+      );
+
+      const d = await r.json();
+
+      if (!r.ok) {
+        throw Error(
+          d.error || "COD refund could not be recorded."
+        );
+      }
+
+      setRefundStatus(
+        String(d.refundStatus || "PROCESSED").toUpperCase()
+      );
+
+      setReturnStatus("REFUNDED");
+
+      setCodRefundReference(
+        String(d.refundReference || reference)
+      );
+
+      router.refresh();
+    } catch (e) {
+      setRefundError(e.message);
+    } finally {
+      setSavingCodRefund(false);
     }
   }
 
@@ -610,72 +731,160 @@ export default function AdminOrderDetailClient({ order, shiprocketTestMode }) {
             )}
           </div>
 
-          {order.paymentStatus === "PAID" &&
-            order.orderStatus === "DELIVERED" &&
-            returnStatus === "RECEIVED" && (
-              <div className="refund-management">
-                <div className="refund-management-head">
-                  <div>
-                    <span>ONLINE PAYMENT REFUND</span>
-                    <strong>
-                      ₹
-                      {Number(
-                        order.total || 0
-                      ).toLocaleString("en-IN")}
-                    </strong>
+          {order.orderStatus === "DELIVERED" &&
+            (returnStatus === "RECEIVED" ||
+              returnStatus === "REFUNDED") && (
+              <>
+                {order.paymentStatus === "PAID" &&
+                  order.paymentId ? (
+                  <div className="refund-management">
+                    <div className="refund-management-head">
+                      <div>
+                        <span>ONLINE PAYMENT REFUND</span>
+                        <strong>
+                          ₹
+                          {Number(
+                            order.total || 0
+                          ).toLocaleString("en-IN")}
+                        </strong>
+                      </div>
+
+                      {refundStatus && (
+                        <b className={`refund-badge refund-${refundStatus.toLowerCase()}`}>
+                          {refundStatus}
+                        </b>
+                      )}
+                    </div>
+
+                    <p>
+                      Refund will be sent to the customer's
+                      original payment method. Do not collect
+                      bank or UPI details from the customer.
+                    </p>
+
+                    {refundId && (
+                      <small>
+                        Razorpay Refund ID: {refundId}
+                      </small>
+                    )}
+
+                    {refundError && (
+                      <div className="refund-error">
+                        {refundError}
+                      </div>
+                    )}
+
+                    {!refundStatus && (
+                      <button
+                        type="button"
+                        className="initiate-refund-btn"
+                        disabled={savingRefund}
+                        onClick={initiateRefund}
+                      >
+                        {savingRefund
+                          ? "INITIATING REFUND…"
+                          : "INITIATE REFUND"}
+                      </button>
+                    )}
+
+                    {refundStatus === "PENDING" && (
+                      <div className="refund-pending">
+                        REFUND INITIATED — WAITING FOR RAZORPAY
+                        CONFIRMATION
+                      </div>
+                    )}
+
+                    {refundStatus === "PROCESSED" && (
+                      <div className="refund-processed">
+                        REFUND PROCESSED SUCCESSFULLY
+                      </div>
+                    )}
                   </div>
+                ) : (
+                  <div className="refund-management cod-refund-management">
+                    <div className="refund-management-head">
+                      <div>
+                        <span>COD / MANUAL REFUND</span>
+                        <strong>
+                          ₹
+                          {Number(
+                            order.total || 0
+                          ).toLocaleString("en-IN")}
+                        </strong>
+                      </div>
 
-                  {refundStatus && (
-                    <b className={`refund-badge refund-${refundStatus.toLowerCase()}`}>
-                      {refundStatus}
-                    </b>
-                  )}
-                </div>
+                      {refundStatus && (
+                        <b className={`refund-badge refund-${refundStatus.toLowerCase()}`}>
+                          {refundStatus}
+                        </b>
+                      )}
+                    </div>
 
-                <p>
-                  Refund will be sent to the customer's
-                  original payment method. Do not collect
-                  bank or UPI details from the customer.
-                </p>
+                    <p>
+                      This order has no captured Razorpay payment.
+                      Complete the customer's refund manually through
+                      the agreed UPI or bank-transfer method, then enter
+                      the transaction reference below.
+                    </p>
 
-                {refundId && (
-                  <small>
-                    Razorpay Refund ID: {refundId}
-                  </small>
-                )}
+                    {refundError && (
+                      <div className="refund-error">
+                        {refundError}
+                      </div>
+                    )}
 
-                {refundError && (
-                  <div className="refund-error">
-                    {refundError}
+                    {refundStatus === "PROCESSED" ? (
+                      <div className="refund-processed">
+                        <strong>COD REFUND COMPLETED</strong>
+
+                        <small>
+                          Refund Status: PROCESSED
+                        </small>
+
+                        <small>
+                          Refund Method:{" "}
+                          {order.refundMethod || "COD_MANUAL"}
+                        </small>
+
+                        {order.refundReference && (
+                          <small>
+                            Reference: {order.refundReference}
+                          </small>
+                        )}
+                      </div>
+                    ) : (
+                      <>
+                        <label className="cod-refund-field">
+                          <span>REFUND REFERENCE</span>
+                          <input
+                            type="text"
+                            value={codRefundReference}
+                            onChange={(e) =>
+                              setCodRefundReference(
+                                e.target.value
+                              )
+                            }
+                            maxLength={200}
+                            placeholder="UPI / bank transaction reference"
+                            disabled={savingCodRefund}
+                          />
+                        </label>
+
+                        <button
+                          type="button"
+                          className="initiate-refund-btn"
+                          disabled={savingCodRefund}
+                          onClick={completeCodRefund}
+                        >
+                          {savingCodRefund
+                            ? "RECORDING REFUND…"
+                            : "MARK COD REFUND COMPLETED"}
+                        </button>
+                      </>
+                    )}
                   </div>
                 )}
-
-                {!refundStatus && (
-                  <button
-                    type="button"
-                    className="initiate-refund-btn"
-                    disabled={savingRefund}
-                    onClick={initiateRefund}
-                  >
-                    {savingRefund
-                      ? "INITIATING REFUND…"
-                      : "INITIATE REFUND"}
-                  </button>
-                )}
-
-                {refundStatus === "PENDING" && (
-                  <div className="refund-pending">
-                    REFUND INITIATED — WAITING FOR RAZORPAY
-                    CONFIRMATION
-                  </div>
-                )}
-
-                {refundStatus === "PROCESSED" && (
-                  <div className="refund-processed">
-                    REFUND PROCESSED SUCCESSFULLY
-                  </div>
-                )}
-              </div>
+              </>
             )}
         </section>
       )}

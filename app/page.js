@@ -1,3 +1,459 @@
-export const dynamic='force-dynamic';import Link from 'next/link';import {getActiveProducts} from './products';import ProductCard from './components/ProductCard';import StoreHeader from './components/StoreHeader';
+export const dynamic = 'force-dynamic';
+
+import Link from 'next/link';
+import { getActiveProducts } from './products';
+import ProductCard from './components/ProductCard';
+import StoreHeader from './components/StoreHeader';
 import SiteFooter from './components/SiteFooter';
-export default async function Home(){let products=[];try{products=await getActiveProducts()}catch{}const featured=products.slice(0,4);return <main className="ac-site"><StoreHeader products={products}/><section className="ac-hero"><div className="ac-noise"/><div className="ac-hero-copy"><span className="ac-kicker">AVANCY COLLECTIVES / PRINT ON DEMAND</span><h1>WEAR<br/><em>YOUR</em><br/>IDEA.</h1><p>Premium. Custom. Printed on Demand.<br/>Designed for everyday expression.</p><Link href="/shop" className="ac-yellow-btn">SHOP THE DROP →</Link><div className="ac-props"><div><b>✦</b><span>PREMIUM<br/>QUALITY</span></div><div><b>▣</b><span>PRINTED<br/>ON DEMAND</span></div><div><b>◎</b><span>WORLDWIDE<br/>SHIPPING</span></div><div><b>◒</b><span>SUSTAINABLE<br/>CHOICES</span></div></div></div><div className="ac-hero-art"><div className="hero-model"><div className="hero-head"/><div className="hero-shirt"><b>CREATE</b><strong>AVNC</strong><small>IMAGINE · DESIGN · WEAR</small></div></div><div className="ac-sticker s1">PRINTED<br/>ON DEMAND</div><div className="ac-sticker s2">NO MINIMUM<br/>ORDERS</div><div className="ac-sticker s3">DESIGN IT.<br/>WEAR IT.<br/>OWN IT.</div><div className="hero-doodle">✳<br/>╱╲<br/>◌</div></div></section><section className="ac-drop" id="drop-001"><div className="ac-section-head"><div><span>01 / NEW SEASON</span><h2>THE DROP</h2></div><Link href="/shop">VIEW ALL PRODUCTS →</Link></div>{featured.length?<div className="ac-product-grid">{featured.map(p=><ProductCard key={p.id} product={p}/>)}</div>:<div className="ac-empty">Activate products in Admin to show them here.</div>}</section><section className="ac-banner"><div className="ac-polaroid"><div className="ac-fabric">AVANCY<br/>COLLECTIVES</div><span>QUALITY YOU CAN FEEL</span></div><div className="ac-banner-copy"><span>02 / MADE DIFFERENT</span><h2><em>MADE FOR YOU.</em><br/>PRINTED ON<br/>DEMAND.</h2><p>Your idea. Your style. Your way.<br/>No limits. Just your imagination.</p><Link href="/create-yours" className="ac-yellow-btn">START CREATING →</Link></div></section><section id="about" className="ac-about"><span>03 / THE COLLECTIVE</span><h2>NOT JUST CLOTHING.<br/><em>A POINT OF VIEW.</em></h2><p>Original graphics, considered silhouettes and custom pieces made for people who want their clothes to say something.</p></section><section id="shipping" className="ac-shipping"><div className="ac-section-head"><div><span>04 / DELIVERY & RETURNS</span><h2>SHIPPING<br/><em>& RETURNS</em></h2></div></div><div className="ac-shipping-grid"><article><span className="ac-shipping-num">01</span><h3>SHIPPING</h3><p>Orders are prepared and dispatched after purchase. As our products are printed on demand, processing time may vary depending on the product and order.</p><p>Once your order is handed to the courier, tracking information will be available through <strong>Track Order</strong>.</p></article><article><span className="ac-shipping-num">02</span><h3>DELIVERY</h3><p>We ship through our delivery partners, including Shiprocket-supported courier services. Delivery times can vary by location, courier availability and circumstances outside our control.</p><p>Please make sure your shipping address and contact details are accurate before completing your order.</p></article><article><span className="ac-shipping-num">03</span><h3>RETURNS</h3><p>Eligible delivered orders can be submitted for a return request within <strong>10 days of delivery</strong>.</p><p>Returns are reviewed before approval. Depending on the reason for return, photos or other supporting evidence may be requested.</p></article><article><span className="ac-shipping-num">04</span><h3>RETURN PROCESS</h3><p>Open your order in <strong>Track Order</strong> and select <strong>Return Request</strong> when the order is eligible.</p><p>After submission, you can follow the return status from the same order-tracking page. Approved returns are processed according to the applicable return and refund conditions.</p></article></div><div className="ac-shipping-note"><strong>IMPORTANT</strong><span>Custom or printed-on-demand products may be subject to additional return conditions where applicable. If your order arrives damaged, incorrect or with a printing issue, contact Avancy Collectives as soon as possible with supporting photos.</span></div></section><SiteFooter/></main>}
+
+export default async function Home() {
+  let products = [];
+
+  try {
+    products = await getActiveProducts();
+  } catch {}
+
+  const featured = products.slice(0, 4);
+  const gallery = products.slice(0, 3);
+
+  return (
+    <main className="v6-home">
+      <StoreHeader products={products} />
+
+      {/* HERO */}
+      <section className="v6-hero">
+        <div className="v6-hero-grid" />
+
+        <div className="v6-hero-copy">
+          <span className="v6-eyebrow">
+            EST. 2026 / CHENNAI, INDIA
+          </span>
+
+          <h1>
+            WEAR
+            <br />
+            YOUR
+            <br />
+            <em>IDEA.</em>
+          </h1>
+
+          <p>
+            PREMIUM STREETWEAR
+            <br />
+            <span className="v6-hero-motion-text">PRINTED ON DEMAND.</span>
+          </p>
+
+          <div className="v6-hero-actions">
+            <Link href="/shop" className="v6-btn v6-btn-yellow">
+              SHOP THE DROP <span>→</span>
+            </Link>
+
+            <Link href="/create-yours" className="v6-btn v6-btn-outline">
+              CREATE YOURS <span>→</span>
+            </Link>
+          </div>
+        </div>
+
+        <div className="v6-hero-product">
+          <div className="v6-hero-glow" />
+
+          <div className="v6-tee-placeholder">
+            <div className="v6-tee-neck" />
+            <div className="v6-tee-body">
+              <span>AVNC</span>
+              <strong>YOUR<br />IDEA.</strong>
+              <small>AVANCY COLLECTIVES</small>
+            </div>
+            <div className="v6-tee-sleeve v6-tee-left" />
+            <div className="v6-tee-sleeve v6-tee-right" />
+          </div>
+
+          <div className="v6-floating-tag v6-tag-one">
+            PRINTED
+            <br />
+            ON DEMAND
+          </div>
+
+          <div className="v6-floating-tag v6-tag-two">
+            NO
+            <br />
+            LIMITS
+          </div>
+
+          <div className="v6-floating-tag v6-tag-three">
+            <span className="v6-hero-motion-text v6-motion-design">DESIGN IT.</span>
+            <br />
+            <span className="v6-hero-motion-text v6-motion-wear">WEAR IT.</span>
+          </div>
+        </div>
+
+        <div className="v6-hero-side">
+          <span>STREETWEAR</span>
+          <span>GRAPHICS</span>
+          <span>MINIMAL</span>
+          <span>CUSTOM</span>
+        </div>
+
+        <div className="v6-scroll">
+          <span>SCROLL</span>
+          <i />
+        </div>
+      </section>
+
+      {/* MARQUEE */}
+      <div className="v6-marquee">
+        <div>
+          AVANCY COLLECTIVES
+          <b>×</b>
+          WEAR YOUR IDEA
+          <b>×</b>
+          AVANCY COLLECTIVES
+          <b>×</b>
+          WEAR YOUR IDEA
+          <b>×</b>
+          AVANCY COLLECTIVES
+          <b>×</b>
+          WEAR YOUR IDEA
+          <b>×</b>
+        </div>
+      </div>
+
+      {/* NEW DROP */}
+      <section className="v6-drop">
+        <div className="v6-section-intro">
+          <span>01 / THE LATEST</span>
+
+          <h2>
+            THE
+            <br />
+            NEW
+            <br />
+            <em>DROP.</em>
+          </h2>
+
+          <p>
+            Fresh graphics.
+            <br />
+            Bold essentials.
+            <br />
+            Made on demand.
+          </p>
+
+          <Link href="/shop" className="v6-text-link">
+            VIEW ALL PRODUCTS →
+          </Link>
+        </div>
+
+        <div className="v6-products">
+          {featured.length ? (
+            featured.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+              />
+            ))
+          ) : (
+            <div className="v6-product-empty">
+              New pieces are landing soon.
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* CREATE YOURS */}
+      <section className="v6-create">
+        <div className="v6-create-art">
+          <div className="v6-create-circle" />
+
+          <div className="v6-tee-placeholder v6-tee-custom">
+            <div className="v6-tee-neck" />
+            <div className="v6-tee-body">
+              <span>YOUR</span>
+              <strong>DESIGN</strong>
+              <small>AVANCY CUSTOM</small>
+            </div>
+            <div className="v6-tee-sleeve v6-tee-left" />
+            <div className="v6-tee-sleeve v6-tee-right" />
+          </div>
+        </div>
+
+        <div className="v6-create-copy">
+          <span>02 / MAKE IT YOURS</span>
+
+          <h2>
+            YOUR
+            <br />
+            DESIGN.
+            <br />
+            <em>OUR TEE.</em>
+          </h2>
+
+          <p>
+            Create a piece that starts with your idea.
+            Upload your design, customise your tee and
+            make it yours.
+          </p>
+
+          <div className="v6-price">
+            <small>STARTING FROM</small>
+            <strong>₹699</strong>
+          </div>
+
+          <Link href="/create-yours" className="v6-btn v6-btn-yellow">
+            START CREATING →
+          </Link>
+        </div>
+      </section>
+
+      {/* PRODUCT LOOKBOOK */}
+      <section className="v6-lookbook">
+        <div className="v6-lookbook-head">
+          <span>03 / AVANCY AFTER DARK</span>
+
+          <h2>
+            PRODUCT
+            <br />
+            <em>STORIES.</em>
+          </h2>
+
+          <p>
+            No models. No distractions.
+            <br />
+            Just the pieces.
+          </p>
+        </div>
+
+        <div className="v6-lookbook-grid">
+          <div className="v6-look-image v6-look-large">
+            <div className="v6-image-slot v6-image-ready">
+              <span>PRODUCT IMAGE 01</span>
+              <small>/ replace later</small>
+            </div>
+            <b>01 / GRAPHIC</b>
+          </div>
+
+          <div className="v6-look-image">
+            <div className="v6-image-slot v6-image-light">
+              <span>PRODUCT IMAGE 02</span>
+              <small>/ replace later</small>
+            </div>
+            <b>02 / MINIMAL</b>
+          </div>
+
+          <div className="v6-look-image">
+            <div className="v6-image-slot v6-image-dark">
+              <span>PRODUCT IMAGE 03</span>
+              <small>/ replace later</small>
+            </div>
+            <b>03 / CUSTOM</b>
+          </div>
+
+          <div className="v6-look-image v6-look-wide">
+            <div className="v6-image-slot v6-image-yellow">
+              <span>PRODUCT IMAGE 04</span>
+              <small>/ replace later</small>
+            </div>
+            <b>04 / AVANCY</b>
+          </div>
+        </div>
+      </section>
+
+      {/* CATEGORIES */}
+      <section className="v6-categories">
+        <div className="v6-category-head">
+          <span>05 / EXPLORE</span>
+          <h2>SHOP BY CATEGORY</h2>
+        </div>
+
+        <div className="v6-category-grid">
+          <Link href="/shop?category=GRAPHIC" className="v6-category">
+            <div className="v6-category-image">
+              <span>GRAPHIC TEE</span>
+            </div>
+
+            <div>
+              <small>01</small>
+              <h3>GRAPHIC</h3>
+              <p>BOLD EXPRESSIONS</p>
+              <strong>EXPLORE →</strong>
+            </div>
+          </Link>
+
+          <Link href="/shop?category=MINIMAL" className="v6-category">
+            <div className="v6-category-image v6-category-white">
+              <span>MINIMAL TEE</span>
+            </div>
+
+            <div>
+              <small>02</small>
+              <h3>MINIMAL</h3>
+              <p>CLEAN ESSENTIALS</p>
+              <strong>EXPLORE →</strong>
+            </div>
+          </Link>
+
+          <Link href="/create-yours" className="v6-category">
+            <div className="v6-category-image v6-category-yellow">
+              <span>CUSTOM TEE</span>
+            </div>
+
+            <div>
+              <small>03</small>
+              <h3>CUSTOM</h3>
+              <p>YOUR DESIGN. OUR TEE.</p>
+              <strong>EXPLORE →</strong>
+            </div>
+          </Link>
+        </div>
+      </section>
+
+      {/* SHIPPING & RETURNS */}
+      <section id="shipping" className="v6-shipping">
+        <div className="v6-shipping-head">
+          <span>06 / DELIVERY & RETURNS</span>
+
+          <h2>
+            SHIPPING
+            <br />
+            <em>& RETURNS</em>
+          </h2>
+        </div>
+
+        <div className="v6-shipping-grid">
+          <article>
+            <span>01</span>
+            <h3>SHIPPING</h3>
+            <p>
+              Orders are prepared and dispatched after
+              purchase. Processing time can vary because
+              products are printed on demand.
+            </p>
+          </article>
+
+          <article>
+            <span>02</span>
+            <h3>TRACKING</h3>
+            <p>
+              Once your order is handed to the courier,
+              follow its progress through Track Order.
+            </p>
+          </article>
+
+          <article>
+            <span>03</span>
+            <h3>RETURNS</h3>
+            <p>
+              Eligible delivered orders can be submitted
+              for a return within 10 days of delivery.
+            </p>
+          </article>
+
+          <article>
+            <span>04</span>
+            <h3>SUPPORT</h3>
+            <p>
+              Damaged, incorrect or printing-related
+              issues can be reported with supporting photos.
+            </p>
+          </article>
+        </div>
+
+        <div className="v6-shipping-important">
+          <strong>IMPORTANT</strong>
+          <p>
+            Custom or printed-on-demand products may be subject to additional return
+            conditions where applicable. If your order arrives damaged, incorrect or
+            with a printing issue, contact Avancy Collectives as soon as possible
+            with supporting photos.
+          </p>
+        </div>
+
+        <Link href="/track-order" className="v6-track-link">
+          TRACK YOUR ORDER →
+        </Link>
+      </section>
+
+      {/* SOCIAL */}
+      <section className="v6-social">
+        <div className="v6-social-copy">
+          <span>07 / THE COLLECTIVE</span>
+
+          <h2>
+            FOLLOW
+            <br />
+            <em>AVANCY.</em>
+          </h2>
+
+          <p>@AVANCYCOLLECTIVES</p>
+        </div>
+
+        <div className="v6-social-grid">
+          {gallery.length ? (
+            gallery.map((product, index) => (
+              <Link
+                href={`/product/${product.id}`}
+                key={product.id}
+                className="v6-social-card"
+              >
+                <div className="v6-social-product">
+                  <span>AVANCY</span>
+                  <strong>{String(index + 1).padStart(2, '0')}</strong>
+                </div>
+
+                <small>VIEW PRODUCT →</small>
+              </Link>
+            ))
+          ) : (
+            <>
+              <div className="v6-social-card">
+                <div className="v6-social-product">
+                  <span>AVANCY</span>
+                  <strong>01</strong>
+                </div>
+              </div>
+
+              <div className="v6-social-card">
+                <div className="v6-social-product">
+                  <span>AVANCY</span>
+                  <strong>02</strong>
+                </div>
+              </div>
+
+              <div className="v6-social-card">
+                <div className="v6-social-product">
+                  <span>AVANCY</span>
+                  <strong>03</strong>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </section>
+
+      {/* FINAL CTA */}
+      <section className="v6-final">
+        <span>08 / YOUR NEXT MOVE</span>
+
+        <h2>
+          WHAT'S
+          <br />
+          YOUR
+          <br />
+          <em>IDEA?</em>
+        </h2>
+
+        <div className="v6-final-actions">
+          <Link href="/shop" className="v6-btn v6-btn-yellow">
+            SHOP AVANCY →
+          </Link>
+
+          <Link href="/create-yours" className="v6-btn v6-btn-outline">
+            CREATE YOURS →
+          </Link>
+        </div>
+      </section>
+
+      <SiteFooter />
+    </main>
+  );
+}

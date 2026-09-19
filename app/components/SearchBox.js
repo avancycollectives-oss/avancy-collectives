@@ -116,8 +116,37 @@ export default function SearchBox({ products = [] }) {
               </button>
             </div>
 
-            <div className="search-input-wrap">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
+            <div
+              className="search-input-wrap"
+              style={{
+                position: "relative",
+                display: "flex",
+                alignItems: "center",
+                width: "100%",
+              }}
+            >
+              <svg
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+                style={{
+                  position: "absolute",
+                  left: "18px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  width: "22px",
+                  height: "22px",
+                  zIndex: 20,
+                  display: "block",
+                  opacity: 1,
+                  visibility: "visible",
+                  pointerEvents: "none",
+                  fill: "none",
+                  stroke: "#E2F952",
+                  strokeWidth: 2,
+                  strokeLinecap: "round",
+                  strokeLinejoin: "round",
+                }}
+              >
                 <circle cx="10.8" cy="10.8" r="6.8" />
                 <path d="m16 16 5 5" />
               </svg>
@@ -128,6 +157,17 @@ export default function SearchBox({ products = [] }) {
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="Search tees, hoodies, graphics…"
                 aria-label="Search products"
+                style={{
+                  width: "100%",
+                  boxSizing: "border-box",
+                  paddingLeft: "56px",
+                  paddingRight: q ? "52px" : "18px",
+                  color: "#ffffff",
+                  background: "#161616",
+                  caretColor: "#E2F952",
+                  WebkitTextFillColor: "#ffffff",
+                  opacity: 1,
+                }}
               />
 
               {q && (
@@ -136,6 +176,13 @@ export default function SearchBox({ products = [] }) {
                   className="search-clear"
                   onClick={() => setQ("")}
                   aria-label="Clear search"
+                  style={{
+                    position: "absolute",
+                    right: "14px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    zIndex: 30,
+                  }}
                 >
                   ×
                 </button>

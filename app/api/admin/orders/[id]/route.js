@@ -44,6 +44,9 @@ export async function PATCH(req, { params }) {
   // Separate return-status update
   if (body.returnStatus !== undefined) {
     const returnStatus = String(body.returnStatus || "").toLowerCase();
+    const rejectionReason = String(
+      body.rejectionReason || ""
+    ).trim();
 
     if (!returnAllowed.includes(returnStatus)) {
       return NextResponse.json(
@@ -52,9 +55,24 @@ export async function PATCH(req, { params }) {
       );
     }
 
+    if (returnStatus === "rejected" && !rejectionReason) {
+      return NextResponse.json(
+        { error: "A rejection reason is required." },
+        { status: 400 }
+      );
+    }
+
+    if (rejectionReason.length > 500) {
+      return NextResponse.json(
+        { error: "Rejection reason is too long." },
+        { status: 400 }
+      );
+    }
+
     const order = await updateOrderReturnStatus(
       id,
-      returnStatus.toUpperCase()
+      returnStatus.toUpperCase(),
+      rejectionReason
     );
 
     return order
