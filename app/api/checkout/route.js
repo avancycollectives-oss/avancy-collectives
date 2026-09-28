@@ -1,3 +1,106 @@
-import crypto from 'crypto';import {NextResponse} from 'next/server';import {getProduct,createOrder,decrementStock} from '../../../lib/db';
-function orderId(){return `AVN-${new Date().getFullYear()}-${crypto.randomUUID().slice(0,8).toUpperCase()}`}
-export async function POST(req){try{const body=await req.json();if(!body.name?.trim()||!body.email?.trim()||!body.phone?.trim()||!body.address?.trim()||!body.city?.trim()||!body.pincode?.trim()||!Array.isArray(body.items)||!body.items.length)return NextResponse.json({error:'Please complete all checkout details.'},{status:400});const items=[];let total=0;for(const item of body.items){if(item.custom){const qty=Math.max(1,Math.min(5,Number(item.qty)||1));const price=699;total+=price*qty;items.push({custom:true,id:item.id||`custom-${crypto.randomUUID()}`,name:item.name||'CUSTOM PRINT',price,size:String(item.size||'M'),qty,design:item.design||{},image:item.image||'',art:'CUSTOM'});continue}const p=await getProduct(String(item.id));if(!p||p.active===false)return NextResponse.json({error:`Product ${item.name||item.id} is no longer available.`},{status:400});const size=String(item.size||'');const qty=Math.max(1,Math.min(20,Number(item.qty)||1));if(!p.sizes.includes(size))return NextResponse.json({error:`Size ${size} is not available for ${p.name}.`},{status:400});if(Number(p.stock?.[size]||0)<qty)return NextResponse.json({error:`Not enough stock for ${p.name} / ${size}.`},{status:400});total+=p.price*qty;items.push({id:p.id,name:p.name,price:p.price,size,qty,image:p.image||'',art:p.art})}const id=orderId();await createOrder({id,customer:{name:body.name.trim(),email:body.email.trim().toLowerCase(),phone:body.phone,address:body.address,city:body.city,state:body.state||'',pincode:body.pincode},items,total,paymentStatus:'PENDING',orderStatus:'NEW'});await decrementStock(items);return NextResponse.json({orderId:id,total,paymentStatus:'PENDING'})}catch(e){console.error(e);return NextResponse.json({error:'Could not create order.'},{status:500})}}
+import crypto from 'crypto';
+import {NextResponse} from 'next/server';
+import {createOrder,decrementStock,claimFreeShippingSlot,applyFreeShippingToOrder} from '../../../lib/db.js';
+import {calculateOrderPricing} from '../../../lib/order-pricing.js';
+
+function orderId(){
+  return `AVN-${new Date().getFullYear()}-${crypto.randomUUID().slice(0,8).toUpperCase()}`;
+}
+
+export const runtime='nodejs';
+
+export async function POST(req){
+  try{
+    const body=await req.json();
+
+    if(
+      !body.name?.trim()||
+      !body.email?.trim()||
+      !body.phone?.trim()||
+      !body.address?.trim()||
+      !body.city?.trim()||
+      !body.pincode?.trim()||
+      !Array.isArray(body.items)||
+      !body.items.length
+    ){
+      return NextResponse.json(
+        {error:'Please complete all checkout details.'},
+        {status:400}
+      );
+    }
+
+    const id=orderId();
+
+    const pricing=await calculateOrderPricing({
+      items:body.items,
+      customer:body,
+      paymentMethod:'COD'
+    });
+
+    /*
+     * Create the order first so the free-shipping slot can safely
+     * reference the order. The slot claim itself is atomic.
+     */
+    const normalShippingAmount=pricing.shippingAmount;
+    const normalTotal=pricing.subtotal+normalShippingAmount;
+
+    await createOrder({
+      id,
+      customer:{
+        name:body.name.trim(),
+        email:body.email.trim().toLowerCase(),
+        phone:body.phone,
+        address:body.address,
+        city:body.city,
+        state:body.state||'',
+        pincode:body.pincode
+      },
+      items:pricing.items,
+      subtotal:pricing.subtotal,
+      gstAmount:0,
+      shippingAmount:normalShippingAmount,
+      total:normalTotal,
+      freeShippingOffer:false,
+      freeShippingSlot:null,
+      shippingCourierName:pricing.shippingCourier,
+      shippingRate:pricing.shippingRate,
+      shippingEtd:pricing.shippingEtd,
+      paymentStatus:'PENDING',
+      orderStatus:'NEW'
+    });
+
+    const freeShippingSlot=await claimFreeShippingSlot(id);
+
+    let shippingAmount=normalShippingAmount;
+    let total=normalTotal;
+    let freeShippingOffer=false;
+
+    if(freeShippingSlot!==null){
+      const updated=await applyFreeShippingToOrder(id,freeShippingSlot);
+      if(updated){
+        shippingAmount=updated.shippingAmount;
+        total=updated.total;
+        freeShippingOffer=true;
+      }
+    }
+
+    await decrementStock(pricing.items);
+
+    return NextResponse.json({
+      orderId:id,
+      subtotal:pricing.subtotal,
+      gstAmount:0,
+      shippingAmount,
+      total,
+      freeShipping:freeShippingOffer||pricing.freeShipping,
+      firstFiveFree:freeShippingOffer,
+      paymentStatus:'PENDING'
+    });
+  }catch(e){
+    console.error(e);
+    return NextResponse.json(
+      {error:e?.message||'Could not create order.'},
+      {status:500}
+    );
+  }
+}

@@ -3,3 +3,11 @@ node_modules/
 .env*
 !.env.example
 npm-debug.log*
+# Local development backups / temporary files
+.carousel-backup/
+*.backup*
+*.before-*
+*.v56-*
+*.v6-*
+*.failed-*
+cloudflared.deb

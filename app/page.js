@@ -196,7 +196,7 @@ export default async function Home() {
 
           <div className="v6-price">
             <small>STARTING FROM</small>
-            <strong>₹699</strong>
+            <strong>₹799</strong>
           </div>
 
           <Link href="/create-yours" className="v6-btn v6-btn-yellow">

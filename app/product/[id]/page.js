@@ -3,15 +3,20 @@ export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getProduct } from "../../products";
+import { getApprovedCollectiveSubmissions } from "../../../lib/db";
 import ProductArt from "../../components/ProductArt";
 import AddToCart from "../../components/AddToCart";
 import StoreHeader from "../../components/StoreHeader";
+import ProductCollective from "./ProductCollective";
 
 const BASE_URL = "https://avancy-collectives.vercel.app";
 
 export async function generateMetadata({ params }) {
   const { id } = await params;
   const p = await getProduct(id);
+  const collectivePhotos = p
+    ? await getApprovedCollectiveSubmissions(p.id)
+    : [];
 
   if (!p || p.active === false) {
     return {
@@ -74,6 +79,9 @@ export default async function ProductPage({ params }) {
   const p = await getProduct((await params).id);
 
   if (!p || p.active === false) return notFound();
+
+  const collectivePhotos = await getApprovedCollectiveSubmissions(p.id);
+
 const productSchema = {
   "@context": "https://schema.org",
   "@type": "Product",
@@ -108,7 +116,15 @@ const productSchema = {
       <StoreHeader products={[p]} />
 
       <section className="product-detail">
-        <ProductArt product={p} large />
+        <div className="product-art-column">
+          <ProductArt product={p} large />
+
+          <ProductCollective
+            initialPhotos={collectivePhotos}
+            productId={p.id}
+            productName={p.name}
+          />
+        </div>
 
         <div className="product-copy">
           <span>{p.category} / AVNC</span>
@@ -142,6 +158,73 @@ const productSchema = {
               <b>{p.color}</b>
             </div>
           </div>
+
+          {p.sizeMeasurements &&
+            Object.keys(p.sizeMeasurements).some(
+              (size) => p.sizeMeasurements[size]
+            ) && (
+              <details className="product-size-guide">
+                <summary>SIZE GUIDE</summary>
+
+                <p className="size-guide-note">
+                  Product measurements are shown in centimetres (cm).
+                  Measurements may vary slightly.
+                </p>
+
+                <div className="size-guide-table-wrap">
+                  <table className="size-guide-table">
+                    <thead>
+                      <tr>
+                        <th>SIZE</th>
+                        <th>CHEST</th>
+                        <th>LENGTH</th>
+                        <th>SHOULDER</th>
+                        <th>SLEEVE</th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      {Object.entries(p.sizeMeasurements)
+                        .filter(
+                          ([, measurements]) =>
+                            measurements &&
+                            Object.values(measurements).some(
+                              (value) =>
+                                value !== "" &&
+                                value !== null &&
+                                value !== undefined
+                            )
+                        )
+                        .sort(([a], [b]) => {
+                          const order = Array.isArray(p.sizes)
+                            ? p.sizes
+                            : String(p.sizes || "")
+                                .split(",")
+                                .map((s) => s.trim())
+                                .filter(Boolean);
+
+                          const ai = order.indexOf(a);
+                          const bi = order.indexOf(b);
+
+                          return (
+                            (ai === -1 ? 999 : ai) -
+                            (bi === -1 ? 999 : bi)
+                          );
+                        })
+                        .map(([size, measurements]) => (
+                          <tr key={size}>
+                            <th>{size}</th>
+                            <td>{measurements.chest || "—"}</td>
+                            <td>{measurements.length || "—"}</td>
+                            <td>{measurements.shoulder || "—"}</td>
+                            <td>{measurements.sleeve || "—"}</td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              </details>
+            )}
 
           <AddToCart product={p} />
 
