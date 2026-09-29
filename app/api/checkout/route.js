@@ -1,7 +1,8 @@
 import crypto from 'crypto';
 import {NextResponse} from 'next/server';
-import {createOrder,decrementStock,claimFreeShippingSlot,applyFreeShippingToOrder} from '../../../lib/db.js';
+import {createOrder,getOrder,decrementStock,claimFreeShippingSlot,applyFreeShippingToOrder} from '../../../lib/db.js';
 import {calculateOrderPricing} from '../../../lib/order-pricing.js';
+import {notifyNewOrder} from '../../../lib/push.js';
 
 function orderId(){
   return `AVN-${new Date().getFullYear()}-${crypto.randomUUID().slice(0,8).toUpperCase()}`;
@@ -85,6 +86,15 @@ export async function POST(req){
     }
 
     await decrementStock(pricing.items);
+
+    const finalOrder=await getOrder(id);
+
+    if(finalOrder){
+      await notifyNewOrder(
+        finalOrder,
+        'COD'
+      );
+    }
 
     return NextResponse.json({
       orderId:id,

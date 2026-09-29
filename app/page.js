@@ -5,6 +5,7 @@ import { getActiveProducts } from './products';
 import ProductCard from './components/ProductCard';
 import StoreHeader from './components/StoreHeader';
 import SiteFooter from './components/SiteFooter';
+import HomeCollectiveQR from './components/HomeCollectiveQR';
 
 export default async function Home() {
   let products = [];
@@ -308,125 +309,36 @@ export default async function Home() {
       </section>
 
       {/* SHIPPING & RETURNS */}
-      <section id="shipping" className="v6-shipping">
-        <div className="v6-shipping-head">
-          <span>06 / DELIVERY & RETURNS</span>
+      {/* ABOUT */}
+      <section id="about" className="v6-about">
+        <div className="v6-section-intro">
+          <span>06 / ABOUT AVANCY</span>
 
           <h2>
-            SHIPPING
+            YOUR KIND
             <br />
-            <em>& RETURNS</em>
+            OF <em>STYLE.</em>
           </h2>
-        </div>
 
-        <div className="v6-shipping-grid">
-          <article>
-            <span>01</span>
-            <h3>SHIPPING</h3>
-            <p>
-              Orders are prepared and dispatched after
-              purchase. Processing time can vary because
-              products are printed on demand.
-            </p>
-          </article>
-
-          <article>
-            <span>02</span>
-            <h3>TRACKING</h3>
-            <p>
-              Once your order is handed to the courier,
-              follow its progress through Track Order.
-            </p>
-          </article>
-
-          <article>
-            <span>03</span>
-            <h3>RETURNS</h3>
-            <p>
-              Eligible delivered orders can be submitted
-              for a return within 10 days of delivery.
-            </p>
-          </article>
-
-          <article>
-            <span>04</span>
-            <h3>SUPPORT</h3>
-            <p>
-              Damaged, incorrect or printing-related
-              issues can be reported with supporting photos.
-            </p>
-          </article>
-        </div>
-
-        <div className="v6-shipping-important">
-          <strong>IMPORTANT</strong>
           <p>
-            Custom or printed-on-demand products may be subject to additional return
-            conditions where applicable. If your order arrives damaged, incorrect or
-            with a printing issue, contact Avancy Collectives as soon as possible
-            with supporting photos.
+            Avancy Collectives is a streetwear collective built around
+            individuality, original ideas and everyday expression.
+          </p>
+
+          <p>
+            We create premium pieces for people who want to wear their
+            identity their own way.
           </p>
         </div>
 
-        <Link href="/track-order" className="v6-track-link">
-          TRACK YOUR ORDER →
-        </Link>
-      </section>
+        <div className="v6-about-mark" aria-hidden="true">
+          <div className="v6-an-mark">
+            <strong className="v6-an-letter v6-an-a">A</strong>
+            <span className="v6-an-divider"></span>
+            <strong className="v6-an-letter v6-an-n">N</strong>
+          </div>
 
-      {/* SOCIAL */}
-      <section className="v6-social">
-        <div className="v6-social-copy">
-          <span>07 / THE COLLECTIVE</span>
-
-          <h2>
-            FOLLOW
-            <br />
-            <em>AVANCY.</em>
-          </h2>
-
-          <p>@AVANCYCOLLECTIVES</p>
-        </div>
-
-        <div className="v6-social-grid">
-          {gallery.length ? (
-            gallery.map((product, index) => (
-              <Link
-                href={`/product/${product.id}`}
-                key={product.id}
-                className="v6-social-card"
-              >
-                <div className="v6-social-product">
-                  <span>AVANCY</span>
-                  <strong>{String(index + 1).padStart(2, '0')}</strong>
-                </div>
-
-                <small>VIEW PRODUCT →</small>
-              </Link>
-            ))
-          ) : (
-            <>
-              <div className="v6-social-card">
-                <div className="v6-social-product">
-                  <span>AVANCY</span>
-                  <strong>01</strong>
-                </div>
-              </div>
-
-              <div className="v6-social-card">
-                <div className="v6-social-product">
-                  <span>AVANCY</span>
-                  <strong>02</strong>
-                </div>
-              </div>
-
-              <div className="v6-social-card">
-                <div className="v6-social-product">
-                  <span>AVANCY</span>
-                  <strong>03</strong>
-                </div>
-              </div>
-            </>
-          )}
+          <small>AVANCY COLLECTIVES™</small>
         </div>
       </section>
 
@@ -453,6 +365,7 @@ export default async function Home() {
         </div>
       </section>
 
+      <HomeCollectiveQR />
       <SiteFooter />
     </main>
   );

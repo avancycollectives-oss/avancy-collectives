@@ -21,12 +21,16 @@ export default function CollectiveModeration() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data?.error || "Could not load submissions.");
+        throw new Error(
+          data?.error || "Could not load submissions."
+        );
       }
 
       setItems(data.submissions || []);
     } catch (err) {
-      setError(err?.message || "Could not load submissions.");
+      setError(
+        err?.message || "Could not load submissions."
+      );
     } finally {
       setLoading(false);
     }
@@ -42,26 +46,34 @@ export default function CollectiveModeration() {
     setMessage("");
 
     try {
-      const res = await fetch("/api/admin/collective", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          id,
-          status,
-        }),
-      });
+      const res = await fetch(
+        "/api/admin/collective",
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            id,
+            status,
+          }),
+        }
+      );
 
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data?.error || "Could not update submission.");
+        throw new Error(
+          data?.error ||
+            "Could not update submission."
+        );
       }
 
       setItems((current) =>
         current.map((item) =>
-          item.id === id ? data.submission : item
+          item.id === id
+            ? data.submission
+            : item
         )
       );
 
@@ -72,9 +84,134 @@ export default function CollectiveModeration() {
             ? "REJECTED"
             : "SET TO PENDING";
 
-      setMessage(`SUBMISSION ${action} SUCCESSFULLY.`);
+      setMessage(
+        `SUBMISSION ${action} SUCCESSFULLY.`
+      );
     } catch (err) {
-      setError(err?.message || "Could not update submission.");
+      setError(
+        err?.message ||
+          "Could not update submission."
+      );
+    } finally {
+      setWorking("");
+    }
+  }
+
+  async function retryInstagram(id) {
+    setWorking(`${id}:INSTAGRAM_RETRY`);
+    setError("");
+    setMessage("");
+
+    try {
+      const res = await fetch(
+        "/api/admin/collective",
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            id,
+            status: "APPROVED",
+          }),
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(
+          data?.error ||
+            "Could not retry Instagram publishing."
+        );
+      }
+
+      setItems((current) =>
+        current.map((item) =>
+          item.id === id
+            ? data.submission
+            : item
+        )
+      );
+
+      if (data.submission?.instagramStatus === "PUBLISHED") {
+        setMessage(
+          "INSTAGRAM POST PUBLISHED SUCCESSFULLY."
+        );
+      } else if (data.submission?.instagramStatus === "FAILED") {
+        setError(
+          data.submission?.instagramError ||
+            "Instagram publishing failed again."
+        );
+      } else {
+        setMessage(
+          "INSTAGRAM PUBLISHING UPDATED."
+        );
+      }
+    } catch (err) {
+      setError(
+        err?.message ||
+          "Could not retry Instagram publishing."
+      );
+    } finally {
+      setWorking("");
+    }
+  }
+
+  async function removeSubmission(item) {
+    const confirmed = window.confirm(
+      `DELETE THIS COLLECTIVE PHOTO?\n\n` +
+      `${item.customerName || "This submission"}\n\n` +
+      `The submission will be removed from the Admin page and the public Collective. ` +
+      `The uploaded Cloudinary image will also be deleted.\n\n` +
+      `THIS ACTION CANNOT BE UNDONE.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setWorking(`${item.id}:DELETE`);
+    setError("");
+    setMessage("");
+
+    try {
+      const res = await fetch(
+        "/api/admin/collective",
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            id: item.id,
+          }),
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(
+          data?.error ||
+            "Could not delete submission."
+        );
+      }
+
+      setItems((current) =>
+        current.filter(
+          (entry) => entry.id !== item.id
+        )
+      );
+
+      setMessage(
+        "COLLECTIVE SUBMISSION DELETED SUCCESSFULLY."
+      );
+    } catch (err) {
+      setError(
+        err?.message ||
+          "Could not delete submission."
+      );
     } finally {
       setWorking("");
     }
@@ -85,25 +222,40 @@ export default function CollectiveModeration() {
       <div className="collective-admin-head">
         <div>
           <span>CONTROL ROOM / THE COLLECTIVE</span>
+
           <h1>CUSTOMER PHOTOS.</h1>
+
           <p>
             Review customer submissions before anything becomes publicly
             visible.
           </p>
         </div>
 
-        <button type="button" onClick={load} disabled={loading}>
+        <button
+          type="button"
+          onClick={load}
+          disabled={loading || working !== ""}
+        >
           {loading ? "LOADING..." : "REFRESH"}
         </button>
       </div>
 
-      {error ? <div className="av-admin-error">{error}</div> : null}
+      {error ? (
+        <div className="av-admin-error">
+          {error}
+        </div>
+      ) : null}
+
       {message ? (
-        <div className="collective-admin-message">{message}</div>
+        <div className="collective-admin-message">
+          {message}
+        </div>
       ) : null}
 
       {loading ? (
-        <div className="collective-admin-empty">LOADING SUBMISSIONS...</div>
+        <div className="collective-admin-empty">
+          LOADING SUBMISSIONS...
+        </div>
       ) : !items.length ? (
         <div className="collective-admin-empty">
           NO COLLECTIVE SUBMISSIONS YET.
@@ -111,7 +263,10 @@ export default function CollectiveModeration() {
       ) : (
         <div className="collective-admin-grid">
           {items.map((item) => (
-            <article className="collective-admin-card" key={item.id}>
+            <article
+              className="collective-admin-card"
+              key={item.id}
+            >
               <div className="collective-admin-photo">
                 <img
                   src={item.imageUrl}
@@ -121,7 +276,10 @@ export default function CollectiveModeration() {
 
               <div className="collective-admin-info">
                 <div className="collective-admin-row">
-                  <strong>{item.customerName}</strong>
+                  <strong>
+                    {item.customerName}
+                  </strong>
+
                   <span
                     className={`collective-status ${String(
                       item.status
@@ -139,24 +297,75 @@ export default function CollectiveModeration() {
 
                 <p>
                   WEBSITE CONSENT:{" "}
-                  <b>{item.websiteConsent ? "YES" : "NO"}</b>
+                  <b>
+                    {item.websiteConsent
+                      ? "YES"
+                      : "NO"}
+                  </b>
                 </p>
 
                 <p>
                   INSTAGRAM CONSENT:{" "}
-                  <b>{item.instagramConsent ? "YES" : "NO"}</b>
+                  <b>
+                    {item.instagramConsent
+                      ? "YES"
+                      : "NO"}
+                  </b>
                 </p>
+
+                <p>
+                  INSTAGRAM:{" "}
+                  <b
+                    className={`collective-instagram-status ${String(
+                      item.instagramStatus || "NOT_REQUESTED"
+                    ).toLowerCase()}`}
+                  >
+                    {item.instagramStatus || "NOT_REQUESTED"}
+                  </b>
+                  {item.instagramPostNumber != null ? (
+                    <>
+                      {" "}· POST #
+                      {String(item.instagramPostNumber).padStart(
+                        3,
+                        "0"
+                      )}
+                    </>
+                  ) : null}
+                </p>
+
+                {item.instagramPublishedAt ? (
+                  <p>
+                    INSTAGRAM PUBLISHED:{" "}
+                    {new Date(
+                      item.instagramPublishedAt
+                    ).toLocaleString("en-IN")}
+                  </p>
+                ) : null}
+
+                {item.instagramError ? (
+                  <p>
+                    INSTAGRAM ERROR:{" "}
+                    <b>
+                      {item.instagramError}
+                    </b>
+                  </p>
+                ) : null}
 
                 <p>
                   SUBMITTED:{" "}
                   {item.createdAt
-                    ? new Date(item.createdAt).toLocaleString("en-IN")
+                    ? new Date(
+                        item.createdAt
+                      ).toLocaleString("en-IN")
                     : "—"}
                 </p>
 
                 {item.rejectionReason ? (
                   <p>
-                    REJECTION NOTE: <b>{item.rejectionReason}</b>
+                    REJECTION NOTE:{" "}
+                    <b>
+                      {item.rejectionReason}
+                    </b>
                   </p>
                 ) : null}
 
@@ -165,10 +374,19 @@ export default function CollectiveModeration() {
                     <>
                       <button
                         type="button"
-                        disabled={working !== "" || !item.websiteConsent}
-                        onClick={() => moderate(item.id, "APPROVED")}
+                        disabled={
+                          working !== "" ||
+                          !item.websiteConsent
+                        }
+                        onClick={() =>
+                          moderate(
+                            item.id,
+                            "APPROVED"
+                          )
+                        }
                       >
-                        {working === `${item.id}:APPROVED`
+                        {working ===
+                        `${item.id}:APPROVED`
                           ? "APPROVING..."
                           : "APPROVE"}
                       </button>
@@ -176,23 +394,55 @@ export default function CollectiveModeration() {
                       <button
                         type="button"
                         className="reject"
-                        disabled={working !== ""}
-                        onClick={() => moderate(item.id, "REJECTED")}
+                        disabled={
+                          working !== ""
+                        }
+                        onClick={() =>
+                          moderate(
+                            item.id,
+                            "REJECTED"
+                          )
+                        }
                       >
-                        {working === `${item.id}:REJECTED`
+                        {working ===
+                        `${item.id}:REJECTED`
                           ? "REJECTING..."
                           : "REJECT"}
                       </button>
                     </>
                   ) : item.status === "APPROVED" ? (
                     <>
+                      {item.instagramConsent &&
+                      item.instagramStatus === "FAILED" ? (
+                        <button
+                          type="button"
+                          disabled={working !== ""}
+                          onClick={() =>
+                            retryInstagram(item.id)
+                          }
+                        >
+                          {working ===
+                          `${item.id}:INSTAGRAM_RETRY`
+                            ? "RETRYING INSTAGRAM..."
+                            : "RETRY INSTAGRAM"}
+                        </button>
+                      ) : null}
+
                       <button
                         type="button"
                         className="reject"
-                        disabled={working !== ""}
-                        onClick={() => moderate(item.id, "REJECTED")}
+                        disabled={
+                          working !== ""
+                        }
+                        onClick={() =>
+                          moderate(
+                            item.id,
+                            "REJECTED"
+                          )
+                        }
                       >
-                        {working === `${item.id}:REJECTED`
+                        {working ===
+                        `${item.id}:REJECTED`
                           ? "REJECTING..."
                           : "REJECT"}
                       </button>
@@ -200,10 +450,18 @@ export default function CollectiveModeration() {
                       <button
                         type="button"
                         className="reset"
-                        disabled={working !== ""}
-                        onClick={() => moderate(item.id, "PENDING")}
+                        disabled={
+                          working !== ""
+                        }
+                        onClick={() =>
+                          moderate(
+                            item.id,
+                            "PENDING"
+                          )
+                        }
                       >
-                        {working === `${item.id}:PENDING`
+                        {working ===
+                        `${item.id}:PENDING`
                           ? "SETTING PENDING..."
                           : "SET PENDING"}
                       </button>
@@ -212,10 +470,19 @@ export default function CollectiveModeration() {
                     <>
                       <button
                         type="button"
-                        disabled={working !== "" || !item.websiteConsent}
-                        onClick={() => moderate(item.id, "APPROVED")}
+                        disabled={
+                          working !== "" ||
+                          !item.websiteConsent
+                        }
+                        onClick={() =>
+                          moderate(
+                            item.id,
+                            "APPROVED"
+                          )
+                        }
                       >
-                        {working === `${item.id}:APPROVED`
+                        {working ===
+                        `${item.id}:APPROVED`
                           ? "APPROVING..."
                           : "APPROVE"}
                       </button>
@@ -223,15 +490,37 @@ export default function CollectiveModeration() {
                       <button
                         type="button"
                         className="reset"
-                        disabled={working !== ""}
-                        onClick={() => moderate(item.id, "PENDING")}
+                        disabled={
+                          working !== ""
+                        }
+                        onClick={() =>
+                          moderate(
+                            item.id,
+                            "PENDING"
+                          )
+                        }
                       >
-                        {working === `${item.id}:PENDING`
+                        {working ===
+                        `${item.id}:PENDING`
                           ? "SETTING PENDING..."
                           : "SET PENDING"}
                       </button>
                     </>
                   )}
+
+                  <button
+                    type="button"
+                    className="delete"
+                    disabled={working !== ""}
+                    onClick={() =>
+                      removeSubmission(item)
+                    }
+                  >
+                    {working ===
+                    `${item.id}:DELETE`
+                      ? "DELETING..."
+                      : "DELETE"}
+                  </button>
                 </div>
               </div>
             </article>

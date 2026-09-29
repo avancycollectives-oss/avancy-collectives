@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import {NextResponse} from 'next/server';
 import {getOrder,markPayment,decrementStock} from '../../../../lib/db';
+import {notifyNewOrder} from '../../../../lib/push.js';
 
 export const runtime='nodejs';
 
@@ -125,6 +126,15 @@ export async function POST(req){
       );
 
       await decrementStock(order.items);
+
+      const paidOrder=await getOrder(order.id);
+
+      if(paidOrder){
+        await notifyNewOrder(
+          paidOrder,
+          'RAZORPAY'
+        );
+      }
     }
 
     return NextResponse.json({

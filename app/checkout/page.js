@@ -1,9 +1,12 @@
 "use client";
 import Link from 'next/link';
-import SiteFooter from '../components/SiteFooter';import {useEffect,useState} from 'react';
+import SiteFooter from '../components/SiteFooter';import {useEffect,useRef,useState} from 'react';
 const countries=[['IN','🇮🇳','+91'],['US','🇺🇸','+1'],['GB','🇬🇧','+44'],['AE','🇦🇪','+971'],['AU','🇦🇺','+61'],['CA','🇨🇦','+1'],['SG','🇸🇬','+65']];
 export default function Checkout(){
  const[cart,setCart]=useState([]),[busy,setBusy]=useState(false),[error,setError]=useState(''),[country,setCountry]=useState(countries[0]),[addresses,setAddresses]=useState([]),[user,setUser]=useState(null),[selected,setSelected]=useState(''),[pricing,setPricing]=useState(null),[quoteBusy,setQuoteBusy]=useState(false),[f,setF]=useState({name:'',email:'',phone:'',address:'',city:'',state:'',pincode:'',payment:'COD'});
+ const quoteAbortRef=useRef(null);
+ const quoteTimerRef=useRef(null);
+ const quoteRequestRef=useRef(0);
  useEffect(()=>{try{setCart(JSON.parse(localStorage.getItem('avancy-cart')||'[]').filter(x=>x?.id&&x?.size))}catch{setCart([])};Promise.all([fetch('/api/account/profile',{cache:'no-store'}),fetch('/api/account/addresses',{cache:'no-store'})]).then(async([pr,ar])=>{const pd=await pr.json();const ad=await ar.json();if(pr.ok){setUser(pd.customer);setF(x=>({...x,name:pd.customer.name||'',email:pd.customer.email||'',phone:pd.customer.phone||''}))}if(ar.ok){let list=ad.addresses||[];if(!list.length){try{const legacy=JSON.parse(localStorage.getItem('avancy-addresses')||'[]');for(const old of Array.isArray(legacy)?legacy:[]){const x=await fetch('/api/account/addresses',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(old)});if(x.ok){const y=await x.json();list.push(y.address)}}if(list.length)localStorage.removeItem('avancy-addresses')}catch{}}setAddresses(list)}}).catch(()=>{})},[]);
  const cartSubtotal=cart.reduce((s,x)=>s+Number(x.price||0)*Number(x.qty||1),0);
  const displayedSubtotal=pricing?.subtotal??cartSubtotal;
@@ -20,9 +23,18 @@ export default function Checkout(){
  function applyAddress(a){setSelected(a.id);setF(x=>({...x,name:a.name||x.name,phone:String(a.phone||'').replace(/^\+?91/,'').replace(/\D/g,'').slice(-10),address:a.address||'',city:a.city||'',state:a.state||'',pincode:a.pincode||''}));if(a.country){const found=countries.find(c=>c[0]==='IN'&&String(a.country).toLowerCase()==='india');if(found)setCountry(found)}}
  async function refreshQuote(nextForm=f){
    if(!cart.length||!/^[0-9]{6}$/.test(nextForm.pincode||'')){
+     if(quoteAbortRef.current)quoteAbortRef.current.abort();
      setPricing(null);
+     setQuoteBusy(false);
      return;
    }
+
+   if(quoteAbortRef.current)quoteAbortRef.current.abort();
+
+   const controller=new AbortController();
+   quoteAbortRef.current=controller;
+
+   const requestId=++quoteRequestRef.current;
 
    setQuoteBusy(true);
    setError('');
@@ -35,25 +47,54 @@ export default function Checkout(){
          items:cart,
          customer:nextForm,
          paymentMethod:nextForm.payment
-       })
+       }),
+       signal:controller.signal
      });
 
      const d=await r.json();
 
+     if(controller.signal.aborted)return;
+
      if(!r.ok)throw Error(d.error||'Unable to calculate delivery.');
 
-     setPricing(d);
+     if(requestId===quoteRequestRef.current)setPricing(d);
    }catch(err){
-     setPricing(null);
-     setError(err.message||'Unable to calculate delivery.');
+     if(err?.name==='AbortError')return;
+
+     if(requestId===quoteRequestRef.current){
+       setPricing(null);
+       setError(err.message||'Unable to calculate delivery.');
+     }
    }finally{
-     setQuoteBusy(false);
+     if(requestId===quoteRequestRef.current)setQuoteBusy(false);
    }
  }
 
  useEffect(()=>{
-   if(/^[0-9]{6}$/.test(f.pincode||'')) refreshQuote(f);
+   if(quoteTimerRef.current)clearTimeout(quoteTimerRef.current);
+
+   if(!/^[0-9]{6}$/.test(f.pincode||'')){
+     if(quoteAbortRef.current)quoteAbortRef.current.abort();
+     setPricing(null);
+     setQuoteBusy(false);
+     return;
+   }
+
+   quoteTimerRef.current=setTimeout(()=>{
+     refreshQuote(f);
+   },500);
+
+   return()=>{
+     if(quoteTimerRef.current)clearTimeout(quoteTimerRef.current);
+   };
  },[f.pincode,f.payment,cart.length]);
+
+ useEffect(()=>{
+   return()=>{
+     if(quoteTimerRef.current)clearTimeout(quoteTimerRef.current);
+     if(quoteAbortRef.current)quoteAbortRef.current.abort();
+   };
+ },[]);
 
  async function submit(e){
    e.preventDefault();

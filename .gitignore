@@ -11,3 +11,6 @@ npm-debug.log*
 *.v6-*
 *.failed-*
 cloudflared.deb
+
+# Project safety backups
+backups/
