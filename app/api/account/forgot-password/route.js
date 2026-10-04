@@ -23,9 +23,9 @@ export async function POST(req){
     */
     if(customer){
       const apiKey=process.env.RESEND_API_KEY;
-      const from=process.env.EMAIL_FROM;
+      const from='account@avancycollectives.in';
 
-      if(!apiKey||!from){
+      if(!apiKey){
         console.error('Password reset email is not configured.');
         return NextResponse.json(
           {error:'Password reset email is not configured yet.'},
@@ -33,19 +33,18 @@ export async function POST(req){
         );
       }
 
-      const token=await createPasswordResetToken(customer.id);
-      const siteUrl=process.env.APP_URL||new URL(req.url).origin;
-      const resetUrl=`${siteUrl}/account/reset-password?token=${encodeURIComponent(token)}`;
+      const otp=await createPasswordResetToken(customer.id);
 
       const resend=new Resend(apiKey);
 
       await resend.emails.send({
         from,
         to:[customer.email],
-        subject:'Reset your Avancy Collectives password',
+        subject:'Your Avancy Collectives password reset code',
         html:`
           <div style="background:#090909;color:#f5f5f0;padding:40px 24px;font-family:Arial,sans-serif">
             <div style="max-width:560px;margin:0 auto;border:1px solid #292929;border-radius:18px;padding:32px;background:#111">
+
               <div style="font-size:28px;font-weight:900;letter-spacing:-.04em">
                 AVANCY<span style="color:#e2f952">COLLECTIVES™</span>
               </div>
@@ -55,26 +54,35 @@ export async function POST(req){
               </p>
 
               <h1 style="font-size:38px;line-height:1;margin:12px 0 18px">
-                RESET YOUR PASSWORD.
+                YOUR RESET CODE.
               </h1>
 
               <p style="color:#c7c7c2;line-height:1.7">
                 We received a request to reset the password for your Avancy Collectives account.
               </p>
 
-              <p style="margin:28px 0">
-                <a href="${resetUrl}" style="display:inline-block;background:#e2f952;color:#090909;text-decoration:none;padding:15px 22px;border-radius:10px;font-weight:900">
-                  RESET PASSWORD →
-                </a>
+              <div style="margin:30px 0;padding:22px;border:1px solid #333;border-radius:14px;text-align:center;background:#0b0b0b">
+                <div style="color:#888;font-size:10px;font-weight:900;letter-spacing:.12em;margin-bottom:10px">
+                  VERIFICATION CODE
+                </div>
+
+                <div style="font-size:42px;font-weight:900;letter-spacing:.22em;color:#e2f952">
+                  ${otp}
+                </div>
+              </div>
+
+              <p style="color:#888;font-size:13px;line-height:1.6">
+                This code expires in 5 minutes and can only be used once.
               </p>
 
               <p style="color:#888;font-size:13px;line-height:1.6">
-                This reset link expires in 30 minutes and can only be used once.
+                You have a maximum of 5 attempts to enter the correct code.
               </p>
 
               <p style="color:#666;font-size:12px;line-height:1.6">
-                If you did not request this, you can safely ignore this email.
+                If you did not request a password reset, you can safely ignore this email.
               </p>
+
             </div>
           </div>
         `
@@ -83,7 +91,7 @@ export async function POST(req){
 
     return NextResponse.json({
       ok:true,
-      message:'If an account exists for that email, a password reset link has been sent.'
+      message:'If an account exists for that email, a password reset code has been sent.'
     });
 
   }catch(error){

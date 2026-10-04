@@ -3,6 +3,7 @@ import {NextResponse} from 'next/server';
 import {createOrder,getOrder,decrementStock,claimFreeShippingSlot,applyFreeShippingToOrder} from '../../../lib/db.js';
 import {calculateOrderPricing} from '../../../lib/order-pricing.js';
 import {notifyNewOrder} from '../../../lib/push.js';
+import {sendOrderConfirmationEmail} from '../../../lib/email.js';
 
 function orderId(){
   return `AVN-${new Date().getFullYear()}-${crypto.randomUUID().slice(0,8).toUpperCase()}`;
@@ -70,7 +71,10 @@ export async function POST(req){
       orderStatus:'NEW'
     });
 
-    const freeShippingSlot=await claimFreeShippingSlot(id);
+    const freeShippingSlot =
+      pricing.subtotal < 999 && !pricing.freeShipping
+        ? await claimFreeShippingSlot(id,body.email)
+        : null;
 
     let shippingAmount=normalShippingAmount;
     let total=normalTotal;
@@ -94,6 +98,21 @@ export async function POST(req){
         finalOrder,
         'COD'
       );
+
+      /*
+       * Email failure must never undo a successfully created COD order.
+       */
+      try{
+        await sendOrderConfirmationEmail(
+          finalOrder,
+          'COD'
+        );
+      }catch(emailError){
+        console.error(
+          'COD order confirmation email error:',
+          emailError
+        );
+      }
     }
 
     return NextResponse.json({

@@ -1,5 +1,8 @@
 "use client";
 
+import { avancyToast } from "../../components/AvancyNotice";
+import { createPortal } from "react-dom";
+
 import Link from "next/link";
 import SiteFooter from "../../components/SiteFooter";
 import { useEffect, useState } from "react";
@@ -190,7 +193,7 @@ export default function Orders() {
         );
       }
 
-      alert("Return request submitted successfully.");
+      avancyToast("Return request submitted successfully.", "success");
 
       closeReturn();
       await load();
@@ -322,9 +325,12 @@ export default function Orders() {
 
       <SiteFooter />
 
-      {returning && (
-        <div
-          className="return-modal-backdrop"
+      {returning &&
+        typeof document !== "undefined" &&
+        createPortal(
+          (
+            <div
+              className="return-modal-backdrop"
           onMouseDown={(e) => {
             if (e.target === e.currentTarget) {
               closeReturn();
@@ -470,7 +476,7 @@ export default function Orders() {
             </div>
           </div>
         </div>
-      )}
+          ))}
     </main>
   );
 }

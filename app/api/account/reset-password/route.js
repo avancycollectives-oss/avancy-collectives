@@ -1,16 +1,41 @@
 import {NextResponse} from 'next/server';
-import {passwordResetFromToken,completePasswordReset} from '../../../../lib/customerAuth';
+import {
+  findCustomerByEmail,
+  findPasswordReset,
+  incrementPasswordResetAttempts
+} from '../../../../lib/db';
+import {
+  passwordHash,
+  completePasswordReset
+} from '../../../../lib/customerAuth';
+
+import crypto from 'crypto';
+
+function hash(v){
+  return crypto
+    .createHash('sha256')
+    .update(v)
+    .digest('hex');
+}
 
 export async function POST(req){
   try{
     const body=await req.json();
 
-    const token=String(body.token||'').trim();
+    const email=String(body.email||'').trim().toLowerCase();
+    const otp=String(body.otp||'').trim();
     const password=String(body.password||'');
 
-    if(!token){
+    if(!email){
       return NextResponse.json(
-        {error:'Invalid or missing reset link.'},
+        {error:'Please enter your email address.'},
+        {status:400}
+      );
+    }
+
+    if(!/^\d{6}$/.test(otp)){
+      return NextResponse.json(
+        {error:'Please enter the 6-digit verification code.'},
         {status:400}
       );
     }
@@ -22,11 +47,26 @@ export async function POST(req){
       );
     }
 
-    const reset=await passwordResetFromToken(token);
+    const customer=await findCustomerByEmail(email);
 
-    if(!reset){
+    if(!customer){
       return NextResponse.json(
-        {error:'This reset link is invalid or has expired.'},
+        {error:'The verification code is invalid or has expired.'},
+        {status:400}
+      );
+    }
+
+    const reset=await findPasswordReset(
+      hash(`${otp}:${customer.id}`)
+    );
+
+    if(!reset || reset.customer_id!==customer.id){
+      if(reset){
+        await incrementPasswordResetAttempts(reset.id);
+      }
+
+      return NextResponse.json(
+        {error:'The verification code is invalid or has expired.'},
         {status:400}
       );
     }

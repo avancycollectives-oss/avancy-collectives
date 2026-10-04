@@ -1,7 +1,9 @@
 "use client";
 
+import { avancyPrompt, avancyToast } from "./AvancyNotice";
+
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import InvoiceButton from "./InvoiceButton";
 
@@ -123,6 +125,15 @@ export default function AdminOrderDetailClient({ order, shiprocketTestMode }) {
     }
   }
 
+  // AVANCY_ADMIN_ORDER_AUTO_REFRESH
+  useEffect(() => {
+    const timer = setInterval(() => {
+      router.refresh();
+    }, 10000);
+
+    return () => clearInterval(timer);
+  }, [router]);
+
   async function updateReturnStatus(v) {
     const previousStatus = returnStatus;
 
@@ -134,9 +145,12 @@ export default function AdminOrderDetailClient({ order, shiprocketTestMode }) {
       let rejectionReason = "";
 
       if (v === "REJECTED") {
-        rejectionReason = window.prompt(
-          "Enter the reason for rejecting this return request:",
-          String(order.returnRejectionReason || "")
+        rejectionReason = await avancyPrompt(
+          "Enter the reason for rejecting this return request.",
+          String(order.returnRejectionReason || ""),
+          {
+            title: "REJECT RETURN REQUEST",
+          }
         );
 
         if (rejectionReason === null) {
@@ -459,9 +473,10 @@ export default function AdminOrderDetailClient({ order, shiprocketTestMode }) {
                 }
 
                 if (data.testMode) {
-                  alert(
+                  avancyToast(
                     data.message ||
-                      "Shiprocket TEST MODE: no real AWB was assigned."
+                      "Shiprocket TEST MODE: no real AWB was assigned.",
+                    "success"
                   );
                 }
               } catch (err) {
@@ -503,9 +518,10 @@ export default function AdminOrderDetailClient({ order, shiprocketTestMode }) {
                 }
 
                 if (data.testMode) {
-                  alert(
+                  avancyToast(
                     data.message ||
-                      "Shiprocket TEST MODE: no real pickup was requested."
+                      "Shiprocket TEST MODE: no real pickup was requested.",
+                    "success"
                   );
                 }
               } catch (err) {

@@ -15,7 +15,7 @@ export default async function CollectivePage({ searchParams }) {
     getApprovedCollectiveSubmissions(selectedProduct),
   ]);
 
-  const collectiveUrl = "https://avancycollectives.com/collective";
+  const collectiveUrl = "https://avancycollectives.in/collective";
 
   const qrCode = await QRCode.toDataURL(collectiveUrl, {
     width: 420,

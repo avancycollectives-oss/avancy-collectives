@@ -14,3 +14,11 @@ cloudflared.deb
 
 # Project safety backups
 backups/
+.vercel
+
+# Domain-change safety backups
+*.backup-domain-*
+
+# CSS safety backups
+app/globals.css.checkout-backup*
+app/globals.css.checkout-before-cleanup*

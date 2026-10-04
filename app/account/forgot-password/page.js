@@ -2,9 +2,12 @@
 
 import Link from 'next/link';
 import {useState} from 'react';
+import {useRouter} from 'next/navigation';
 import SiteFooter from '../../components/SiteFooter';
 
 export default function ForgotPassword(){
+  const router=useRouter();
+
   const[email,setEmail]=useState('');
   const[busy,setBusy]=useState(false);
   const[message,setMessage]=useState('');
@@ -12,6 +15,7 @@ export default function ForgotPassword(){
 
   async function submit(e){
     e.preventDefault();
+
     setBusy(true);
     setMessage('');
     setError('');
@@ -26,13 +30,19 @@ export default function ForgotPassword(){
       const data=await response.json();
 
       if(!response.ok){
-        throw new Error(data.error||'Unable to send reset link.');
+        throw new Error(data.error||'Unable to send verification code.');
       }
 
       setMessage(
         data.message||
-        'If an account exists for that email, a password reset link has been sent.'
+        'If an account exists for that email, a verification code has been sent.'
       );
+
+      setTimeout(()=>{
+        router.push(
+          `/account/reset-password?email=${encodeURIComponent(email.trim().toLowerCase())}`
+        );
+      },800);
 
     }catch(error){
       setError(error.message);
@@ -44,6 +54,7 @@ export default function ForgotPassword(){
   return (
     <main className="auth-premium">
       <div className="auth-panel">
+
         <Link href="/" className="auth-logo">
           AVANCY<span>COLLECTIVES™</span>
         </Link>
@@ -57,10 +68,11 @@ export default function ForgotPassword(){
         </h1>
 
         <p>
-          Enter the email connected to your account and we'll send you a secure reset link.
+          Enter the email connected to your account and we'll send you a 6-digit verification code.
         </p>
 
         <form onSubmit={submit}>
+
           <label>
             EMAIL
             <input
@@ -85,8 +97,9 @@ export default function ForgotPassword(){
           )}
 
           <button disabled={busy}>
-            {busy?'SENDING…':'SEND RESET LINK →'}
+            {busy?'SENDING…':'SEND VERIFICATION CODE →'}
           </button>
+
         </form>
 
         <p className="auth-switch">
@@ -99,6 +112,7 @@ export default function ForgotPassword(){
         <Link href="/shop" className="back-link">
           ← SHOP
         </Link>
+
       </div>
 
       <SiteFooter/>

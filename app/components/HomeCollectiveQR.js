@@ -2,7 +2,7 @@ import Link from "next/link";
 import QRCode from "qrcode";
 
 export default async function HomeCollectiveQR() {
-  const collectiveUrl = "https://avancycollectives.com/collective";
+  const collectiveUrl = "https://avancycollectives.in/collective";
 
   const qrCode = await QRCode.toDataURL(collectiveUrl, {
     width: 420,

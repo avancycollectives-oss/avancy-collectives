@@ -25,8 +25,23 @@ export async function POST(req) {
       paymentMethod: body.paymentMethod || "COD",
     });
 
-    const firstFiveRemaining = await getFreeShippingSlotsRemaining();
-    const firstFiveFree = firstFiveRemaining > 0;
+    /*
+     * The first-five promotion is customer-specific.
+     * Without an email we do not promise promotional free shipping;
+     * the normal ₹999 rule remains authoritative.
+     */
+    const customerEmail = String(
+      body?.customer?.email || ""
+    ).trim().toLowerCase();
+
+    const firstFiveRemaining = customerEmail
+      ? await getFreeShippingSlotsRemaining(customerEmail)
+      : 0;
+
+    const firstFiveFree =
+      Boolean(customerEmail) &&
+      firstFiveRemaining > 0 &&
+      pricing.subtotal < 999;
 
     return NextResponse.json({
       ok: true,

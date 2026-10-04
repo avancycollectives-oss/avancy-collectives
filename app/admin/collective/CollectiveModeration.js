@@ -1,5 +1,7 @@
 "use client";
 
+import { avancyConfirm, avancyPrompt, avancyToast } from "../../components/AvancyNotice";
+
 import { useEffect, useState } from "react";
 
 export default function CollectiveModeration() {
@@ -41,6 +43,32 @@ export default function CollectiveModeration() {
   }, []);
 
   async function moderate(id, status) {
+    let rejectionReason = "";
+
+    if (status === "REJECTED") {
+      const reason = await avancyPrompt(
+        "Please enter the reason for rejecting this submission.",
+        "",
+        {
+          title: "Reject submission",
+        }
+      );
+
+      if (reason === null) {
+        return;
+      }
+
+      rejectionReason = reason;
+
+      if (!rejectionReason) {
+        avancyToast(
+          "A rejection reason is required.",
+          "error"
+        );
+        return;
+      }
+    }
+
     setWorking(`${id}:${status}`);
     setError("");
     setMessage("");
@@ -56,6 +84,7 @@ export default function CollectiveModeration() {
           body: JSON.stringify({
             id,
             status,
+            rejectionReason,
           }),
         }
       );
@@ -159,15 +188,15 @@ export default function CollectiveModeration() {
   }
 
   async function removeSubmission(item) {
-    const confirmed = window.confirm(
-      `DELETE THIS COLLECTIVE PHOTO?\n\n` +
-      `${item.customerName || "This submission"}\n\n` +
-      `The submission will be removed from the Admin page and the public Collective. ` +
-      `The uploaded Cloudinary image will also be deleted.\n\n` +
-      `THIS ACTION CANNOT BE UNDONE.`
+    const confirmed = await avancyConfirm(
+      `${item.customerName || "This submission"} will be removed from the Admin page and public Collective. The uploaded Cloudinary image will also be deleted. This action cannot be undone.`,
+      {
+        title:"DELETE COLLECTIVE PHOTO?",
+        danger:true
+      }
     );
 
-    if (!confirmed) {
+    if(!confirmed){
       return;
     }
 

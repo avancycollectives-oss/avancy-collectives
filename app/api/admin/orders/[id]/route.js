@@ -5,6 +5,7 @@ import {
   getOrder,
   updateOrderStatus,
   updateOrderReturnStatus,
+  deleteOrder,
 } from "../../../../../lib/db";
 
 const allowed = [
@@ -104,6 +105,40 @@ export async function PATCH(req, { params }) {
         { error: "Order not found." },
         { status: 404 }
       );
+}
+
+export async function DELETE(req, { params }) {
+  const c = await cookies();
+
+  if (!(await validSession(c.get("avancy_admin")?.value))) {
+    return NextResponse.json(
+      { error: "Unauthorized" },
+      { status: 401 }
+    );
+  }
+
+  const { id } = await params;
+
+  if (!id) {
+    return NextResponse.json(
+      { error: "Order ID is required." },
+      { status: 400 }
+    );
+  }
+
+  const deletedId = await deleteOrder(id);
+
+  if (!deletedId) {
+    return NextResponse.json(
+      { error: "Order not found." },
+      { status: 404 }
+    );
+  }
+
+  return NextResponse.json({
+    ok: true,
+    orderId: deletedId,
+  });
 }
 
 export async function GET(req, { params }) {

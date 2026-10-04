@@ -1,5 +1,7 @@
 "use client";
 
+import { avancyConfirm } from "../../../components/AvancyNotice";
+
 import {useEffect,useState} from "react";
 import {useParams,useRouter} from "next/navigation";
 import Link from "next/link";
@@ -189,7 +191,15 @@ export default function EditProduct(){
   }
 
   async function del(){
-    if(!confirm("Delete this product permanently?"))return;
+    const confirmed=await avancyConfirm(
+      "This product will be permanently removed from the Avancy catalogue. This action cannot be undone.",
+      {
+        title:"DELETE PRODUCT?",
+        danger:true
+      }
+    );
+
+    if(!confirmed)return;
 
     setDeleting(true);
 

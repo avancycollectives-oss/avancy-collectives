@@ -1,5 +1,7 @@
 "use client";
 
+import { avancyToast } from "./AvancyNotice";
+
 function esc(v) {
   return String(v ?? '').replace(
     /[&<>"']/g,
@@ -607,8 +609,9 @@ window.onload = () =>
     );
 
     if (!w) {
-      alert(
-        'Please allow pop-ups for Avancy Collectives to print the invoice.'
+      avancyToast(
+        "Please allow pop-ups for Avancy Collectives to print the invoice.",
+        "error"
       );
       return;
     }

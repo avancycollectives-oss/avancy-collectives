@@ -15,7 +15,6 @@ export default async function Home() {
   } catch {}
 
   const featured = products.slice(0, 4);
-  const gallery = products.slice(0, 3);
 
   return (
     <main className="v6-home">
@@ -140,9 +139,6 @@ export default async function Home() {
             Made on demand.
           </p>
 
-          <Link href="/shop" className="v6-text-link">
-            VIEW ALL PRODUCTS →
-          </Link>
         </div>
 
         <div className="v6-products">
@@ -158,6 +154,12 @@ export default async function Home() {
               New pieces are landing soon.
             </div>
           )}
+        </div>
+
+        <div className="v6-products-explore">
+          <Link href="/shop" className="v6-text-link">
+            EXPLORE ALL PRODUCTS <span>→</span>
+          </Link>
         </div>
       </section>
 
@@ -206,63 +208,10 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* PRODUCT LOOKBOOK */}
-      <section className="v6-lookbook">
-        <div className="v6-lookbook-head">
-          <span>03 / AVANCY AFTER DARK</span>
-
-          <h2>
-            PRODUCT
-            <br />
-            <em>STORIES.</em>
-          </h2>
-
-          <p>
-            No models. No distractions.
-            <br />
-            Just the pieces.
-          </p>
-        </div>
-
-        <div className="v6-lookbook-grid">
-          <div className="v6-look-image v6-look-large">
-            <div className="v6-image-slot v6-image-ready">
-              <span>PRODUCT IMAGE 01</span>
-              <small>/ replace later</small>
-            </div>
-            <b>01 / GRAPHIC</b>
-          </div>
-
-          <div className="v6-look-image">
-            <div className="v6-image-slot v6-image-light">
-              <span>PRODUCT IMAGE 02</span>
-              <small>/ replace later</small>
-            </div>
-            <b>02 / MINIMAL</b>
-          </div>
-
-          <div className="v6-look-image">
-            <div className="v6-image-slot v6-image-dark">
-              <span>PRODUCT IMAGE 03</span>
-              <small>/ replace later</small>
-            </div>
-            <b>03 / CUSTOM</b>
-          </div>
-
-          <div className="v6-look-image v6-look-wide">
-            <div className="v6-image-slot v6-image-yellow">
-              <span>PRODUCT IMAGE 04</span>
-              <small>/ replace later</small>
-            </div>
-            <b>04 / AVANCY</b>
-          </div>
-        </div>
-      </section>
-
       {/* CATEGORIES */}
       <section className="v6-categories">
         <div className="v6-category-head">
-          <span>05 / EXPLORE</span>
+          <span>03 / EXPLORE</span>
           <h2>SHOP BY CATEGORY</h2>
         </div>
 
@@ -308,11 +257,10 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* SHIPPING & RETURNS */}
       {/* ABOUT */}
       <section id="about" className="v6-about">
         <div className="v6-section-intro">
-          <span>06 / ABOUT AVANCY</span>
+          <span>04 / ABOUT AVANCY</span>
 
           <h2>
             YOUR KIND
@@ -342,9 +290,71 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* SHIPPING & RETURNS */}
+      <section id="shipping-returns" className="v6-shipping">
+        <div className="v6-section-intro">
+          <span>05 / SHIPPING & RETURNS</span>
+
+          <h2>
+            MADE TO
+            <br />
+            <em>ARRIVE.</em>
+          </h2>
+
+          <p>
+            Every Avancy order is packed with care and shipped with
+            tracking, so you know where your piece is from dispatch
+            to doorstep.
+          </p>
+        </div>
+
+        <div className="v6-shipping-grid">
+          <article className="v6-shipping-card">
+            <span>01</span>
+            <h3>SHIPPING</h3>
+            <p>
+              Orders below ₹999 are charged the applicable delivery
+              rate calculated at checkout.
+            </p>
+            <strong>FREE ABOVE ₹999</strong>
+          </article>
+
+          <article className="v6-shipping-card">
+            <span>02</span>
+            <h3>TRACKING</h3>
+            <p>
+              Once your order is shipped, tracking details are provided
+              so you can follow its journey.
+            </p>
+            <strong>TRACK EVERY STEP</strong>
+          </article>
+
+          <article className="v6-shipping-card">
+            <span>03</span>
+            <h3>RETURNS</h3>
+            <p>
+              Eligible products can be requested for return within
+              10 days of delivery, subject to our return conditions.
+            </p>
+            <strong>10-DAY RETURN WINDOW</strong>
+          </article>
+
+          <article className="v6-shipping-card v6-shipping-card-dark">
+            <span>04</span>
+            <h3>ORDER CARE</h3>
+            <p>
+              We pack every piece carefully before it leaves us.
+              Keep your order and packaging details available if
+              you need support.
+            </p>
+            <Link href="/track-order">TRACK YOUR ORDER →</Link>
+          </article>
+        </div>
+      </section>
+
       {/* FINAL CTA */}
       <section className="v6-final">
-        <span>08 / YOUR NEXT MOVE</span>
+        <span>06 / YOUR NEXT MOVE</span>
 
         <h2>
           WHAT'S

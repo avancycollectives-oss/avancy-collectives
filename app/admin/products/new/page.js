@@ -327,11 +327,11 @@ export default function NewProduct(){
             {fieldError("stock")}
           </label>
 
-          <section style={{marginTop:18}}>
+          <section className="av-size-guide-section">
             <p className="av-admin-kicker">SIZE GUIDE / MEASUREMENTS</p>
 
-            <div style={{overflowX:"auto",marginTop:10}}>
-              <table style={{width:"100%",borderCollapse:"collapse",minWidth:650}}>
+            <div className="av-size-guide-scroll">
+              <table className="av-size-guide-table">
                 <thead>
                   <tr>
                     <th style={{textAlign:"left",padding:"10px 8px"}}>SIZE</th>

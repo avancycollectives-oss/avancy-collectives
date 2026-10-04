@@ -1,5 +1,8 @@
 "use client";
 
+import { avancyToast } from "../components/AvancyNotice";
+import { createPortal } from "react-dom";
+
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import InvoiceButton from "../components/InvoiceButton";
@@ -263,7 +266,7 @@ export default function TrackOrder() {
         );
       }
 
-      alert("Return request submitted successfully.");
+      avancyToast("Return request submitted successfully.", "success");
 
       closeReturn();
 
@@ -680,9 +683,12 @@ Thank you.`
         </section>
       )}
 
-      {returning && (
-        <div
-          className="return-modal-backdrop"
+      {returning &&
+        typeof document !== "undefined" &&
+        createPortal(
+          (
+            <div
+              className="return-modal-backdrop"
           onMouseDown={(e) => {
             if (e.target === e.currentTarget) {
               closeReturn();
@@ -828,7 +834,7 @@ Thank you.`
             </div>
           </div>
         </div>
-      )}
+          ), document.body)}
 
       <SiteFooter />
     </main>

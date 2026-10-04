@@ -31,7 +31,6 @@ export default function ProductCard({ product }) {
 
             <small>
               {product.fit || "Streetwear"}
-              {product.color ? ` · ${product.color}` : ""}
             </small>
 
             {product.description ? (
@@ -47,7 +46,11 @@ export default function ProductCard({ product }) {
         </div>
       </Link>
 
-      <AddToCart product={product} compact />
+      <AddToCart
+        product={product}
+        compact
+        requireSizeSelection
+      />
     </article>
   );
 }

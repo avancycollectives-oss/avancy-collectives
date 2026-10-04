@@ -1,5 +1,7 @@
 "use client";
 
+import { avancyConfirm, avancyToast } from "./AvancyNotice";
+
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import InvoiceButton from "./InvoiceButton";
@@ -52,7 +54,7 @@ export default function AdminOrdersClient({
   }
 
   useEffect(() => {
-    const i = setInterval(refresh, 15000);
+    const i = setInterval(refresh, 10000);
 
     return () => clearInterval(i);
   }, []);
@@ -73,6 +75,51 @@ export default function AdminOrdersClient({
       }),
     [o, q, f]
   );
+
+  async function removeOrder(id) {
+    const confirmed = await avancyConfirm(
+      `This permanently removes order #${id} from the Avancy admin database. This action cannot be undone.`,
+      {
+        title: `DELETE ORDER #${id}?`,
+        danger: true,
+      }
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setSaving(`delete:${id}`);
+    setErr("");
+
+    try {
+      const r = await fetch(
+        `/api/admin/orders/${encodeURIComponent(id)}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      const d = await r.json();
+
+      if (!r.ok) {
+        throw Error(
+          d.error || "Order deletion failed."
+        );
+      }
+
+      setO((orders) =>
+        orders.filter(
+          (order) =>
+            String(order.id) !== String(id)
+        )
+      );
+    } catch (e) {
+      setErr(e.message);
+    } finally {
+      setSaving("");
+    }
+  }
 
   async function update(id, status) {
     setSaving(id);
@@ -229,12 +276,28 @@ export default function AdminOrdersClient({
 
                 <InvoiceButton order={x} />
 
+                {process.env.NODE_ENV !== "production" && (
+                  <button
+                    type="button"
+                    className="admin-delete-order"
+                    onClick={() => removeOrder(x.id)}
+                    disabled={
+                      saving === `delete:${x.id}`
+                    }
+                  >
+                    {saving === `delete:${x.id}`
+                      ? "DELETING…"
+                      : "DELETE ORDER"}
+                  </button>
+                )}
+
                 <Link
                   href={`/admin/orders/${encodeURIComponent(
                     x.id
                   )}`}
+                  className="admin-open-order"
                 >
-                  OPEN →
+                  OPEN ORDER →
                 </Link>
               </div>
 

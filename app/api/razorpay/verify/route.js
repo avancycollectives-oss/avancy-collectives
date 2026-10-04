@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import {NextResponse} from 'next/server';
 import {getOrder,markPayment,decrementStock} from '../../../../lib/db';
 import {notifyNewOrder} from '../../../../lib/push.js';
+import {sendOrderConfirmationEmail} from '../../../../lib/email.js';
 
 export const runtime='nodejs';
 
@@ -134,6 +135,23 @@ export async function POST(req){
           paidOrder,
           'RAZORPAY'
         );
+
+        /*
+         * Payment is already verified and marked PAID.
+         * Email failure must never turn a successful payment
+         * into a failed verification response.
+         */
+        try{
+          await sendOrderConfirmationEmail(
+            paidOrder,
+            'RAZORPAY'
+          );
+        }catch(emailError){
+          console.error(
+            'Razorpay order confirmation email error:',
+            emailError
+          );
+        }
       }
     }
 

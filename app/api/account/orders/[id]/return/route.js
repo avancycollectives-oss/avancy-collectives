@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { customerFromToken } from "../../../../../../lib/customerAuth";
 import { requestOrderReturn } from "../../../../../../lib/db";
+import { sendReturnRequestEmail } from "../../../../../../lib/email.js";
 
 export async function POST(req, { params }) {
   try {
@@ -56,6 +57,18 @@ export async function POST(req, { params }) {
             "This order is not eligible for return. Returns are available only within 10 days of delivery.",
         },
         { status: 400 }
+      );
+    }
+
+    /*
+     * Email failure must never undo a successfully saved return request.
+     */
+    try {
+      await sendReturnRequestEmail(order);
+    } catch (emailError) {
+      console.error(
+        "RETURN_SUPPORT_EMAIL_ERROR",
+        emailError
       );
     }
 

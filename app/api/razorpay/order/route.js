@@ -88,7 +88,10 @@ export async function POST(req){
     /*
      * Claim one of the five free-delivery slots atomically.
      */
-    const freeShippingSlot=await claimFreeShippingSlot(id);
+    const freeShippingSlot =
+      pricing.subtotal < 999 && !pricing.freeShipping
+        ? await claimFreeShippingSlot(id,body.email)
+        : null;
 
     let shippingAmount=normalShippingAmount;
     let total=normalTotal;
