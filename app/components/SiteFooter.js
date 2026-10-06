@@ -42,7 +42,7 @@ export default function SiteFooter() {
 
         <a href="/#contact">CONTACT US</a>
 
-        <a href="/#shipping">SHIPPING &amp; RETURNS</a>
+        <a href="/#shipping-returns">SHIPPING &amp; RETURNS</a>
       </div>
 
       <div id="contact">
