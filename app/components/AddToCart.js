@@ -106,6 +106,10 @@ export default function AddToCart({
       new Event("avancy-cart-updated")
     );
 
+    if ("vibrate" in navigator) {
+      navigator.vibrate(40);
+    }
+
     setAdded(true);
   }
 
